@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ZirakPOS — Carwash</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700;900&family=Space+Grotesk:wght@400;600;700;900&display=swap');
+
+:root {
+  --bg:#0a0f1a; --surface:#111827; --surface2:#1a2235;
+  --accent:#00d4ff; --accent2:#0099cc;
+  --green:#00e676; --yellow:#ffd600; --red:#ff5252; --orange:#ff9800; --purple:#b388ff;
+  --text:#f0f4ff; --muted:#6b7a99;
+  --border:rgba(0,212,255,0.15); --glow:0 0 20px rgba(0,212,255,0.3);
+  --font-en:'Space Grotesk',sans-serif; --font-ku:'Noto Sans Arabic',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--font-en);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;direction:ltr;}
+body.lang-ku{font-family:var(--font-ku);direction:rtl;}
+.screen{display:none;min-height:100vh;flex-direction:column;}.screen.active{display:flex;}
+
+/* LANG TOGGLE */
+.lang-toggle{position:absolute;top:1.1rem;right:1.1rem;background:var(--surface2);border:1.5px solid var(--border);border-radius:20px;display:flex;overflow:hidden;z-index:10;}
+body.lang-ku .lang-toggle{right:auto;left:1.1rem;}
+.lang-opt{padding:0.32rem 0.65rem;font-size:0.72rem;font-weight:700;cursor:pointer;color:var(--muted);border:none;background:none;font-family:var(--font-en);transition:all 0.15s;}
+.lang-opt.active{background:var(--accent);color:#000;border-radius:18px;}
+
+/* LOGIN */
+#screen-login{background:radial-gradient(ellipse at 50% 0%,#0d2137 0%,#0a0f1a 70%);align-items:center;justify-content:center;padding:2rem;position:relative;}
+.login-logo{font-size:3.2rem;margin-bottom:0.3rem;filter:drop-shadow(0 0 20px rgba(0,212,255,0.6));animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.login-brand{font-family:var(--font-en);font-size:1.9rem;font-weight:900;color:var(--accent);letter-spacing:2px;}
+.login-tagline{color:var(--muted);font-size:0.78rem;text-align:center;margin-bottom:1.6rem;margin-top:0.15rem;}
+.login-form{width:100%;max-width:290px;display:flex;flex-direction:column;gap:0.8rem;}
+.login-field{display:flex;flex-direction:column;gap:0.3rem;}
+.login-field label{font-size:0.68rem;font-weight:700;color:var(--muted);letter-spacing:1px;}
+.login-input{background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:0.82rem 1rem;color:var(--text);font-family:var(--font-en);font-size:1rem;font-weight:700;width:100%;transition:border-color 0.2s;direction:ltr;text-align:center;}
+.login-input:focus{outline:none;border-color:var(--accent);box-shadow:var(--glow);}
+.login-input::placeholder{color:var(--muted);font-size:0.8rem;}
+.login-input.error{border-color:var(--red);}
+.pin-dots{display:flex;justify-content:center;gap:0.65rem;margin:0.35rem 0;}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--muted);transition:all 0.15s;}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px rgba(0,212,255,0.5);}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;}
+.pin-key{background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:0.9rem;color:var(--text);font-family:var(--font-en);font-size:1.2rem;font-weight:700;cursor:pointer;transition:all 0.12s;text-align:center;}
+.pin-key:active{background:var(--accent);color:#000;border-color:var(--accent);transform:scale(0.93);}
+.pin-key.del{color:var(--red);font-size:0.9rem;}.pin-key.zero{grid-column:2;}.pin-key.back-btn{font-size:0.72rem;color:var(--muted);}
+.login-error{color:var(--red);font-size:0.78rem;text-align:center;min-height:1rem;font-weight:700;}
+.login-btn{width:100%;padding:0.9rem;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-family:inherit;font-size:0.95rem;font-weight:900;cursor:pointer;box-shadow:var(--glow);transition:all 0.15s;}
+.login-btn:active{transform:scale(0.97);}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0.7rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;flex-direction:column;}
+.topbar-brand{font-family:var(--font-en);font-weight:900;font-size:0.92rem;color:var(--accent);}
+.topbar-worker{font-size:0.72rem;color:var(--muted);margin-top:0.08rem;}
+.topbar-right{display:flex;gap:0.45rem;align-items:center;}
+.icon-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;width:35px;height:35px;display:flex;align-items:center;justify-content:center;font-size:0.95rem;cursor:pointer;color:var(--text);transition:all 0.15s;}
+.icon-btn:active{background:var(--accent);color:#000;}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex;background:var(--surface);border-top:1px solid var(--border);}
+.nav-tab{flex:1;padding:0.7rem 0.3rem;border:none;background:none;color:var(--muted);font-family:inherit;font-size:0.65rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.18rem;transition:color 0.15s;}
+.nav-tab .tab-icon{font-size:1.1rem;}.nav-tab.active{color:var(--accent);}
+
+.section-label{font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.42rem;font-family:var(--font-en);}
+
+/* MAIN */
+#screen-main{background:var(--bg);}
+.main-content{flex:1;padding:0.9rem;display:flex;flex-direction:column;gap:0.9rem;overflow-y:auto;}
+
+/* CAMERA */
+.camera-section{background:var(--surface);border:1.5px solid var(--border);border-radius:18px;overflow:hidden;}
+.camera-preview{width:100%;height:175px;background:#050a12;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+#video-feed,#photo-preview{width:100%;height:100%;object-fit:cover;display:none;}
+.camera-idle{display:flex;flex-direction:column;align-items:center;gap:0.4rem;color:var(--muted);}
+.camera-idle-icon{font-size:2.5rem;opacity:0.32;}.camera-idle-text{font-size:0.8rem;}
+.scan-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(2px);}
+.scan-overlay.active{display:flex;}
+.scan-box{width:200px;height:70px;border:2px solid var(--accent);border-radius:8px;position:relative;box-shadow:0 0 25px rgba(0,212,255,0.4);}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scan 1.5s ease-in-out infinite;top:0;}
+@keyframes scan{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}
+.scan-label{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);color:var(--accent);font-size:0.72rem;white-space:nowrap;font-weight:700;}
+.ai-result{margin:0 0.75rem 0.75rem;background:rgba(0,230,118,0.07);border:1.5px solid rgba(0,230,118,0.3);border-radius:11px;padding:0.7rem 0.9rem;display:none;align-items:center;gap:0.75rem;}
+.ai-result.show{display:flex;}
+.ai-plate{font-size:1rem;font-weight:900;color:var(--green);font-family:var(--font-en);}
+.ai-cartype{font-size:0.75rem;color:var(--muted);margin-top:0.1rem;}
+.ai-badge{background:var(--green);color:#000;font-size:0.6rem;font-weight:900;padding:0.18rem 0.42rem;border-radius:5px;font-family:var(--font-en);}
+.camera-actions{padding:0.7rem;display:flex;gap:0.5rem;}
+.cam-btn{flex:1;padding:0.75rem;border-radius:11px;border:none;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:0.32rem;}
+.cam-btn-primary{background:var(--accent);color:#000;box-shadow:0 3px 10px rgba(0,212,255,0.22);}
+.cam-btn-primary:active{transform:scale(0.97);}
+.cam-btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.cam-btn-secondary:active{transform:scale(0.97);}
+
+/* SIZE */
+.size-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;}
+.size-btn{background:var(--surface2);border:2px solid var(--border);border-radius:13px;padding:0.8rem 0.3rem;color:var(--text);font-family:inherit;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:0.28rem;}
+.size-btn .size-icon{font-size:1.6rem;}.size-btn.selected{background:rgba(0,212,255,0.1);border-color:var(--accent);color:var(--accent);}
+.size-btn:active{transform:scale(0.96);}
+
+/* SERVICE */
+.service-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;}
+.service-btn{background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:0.85rem 0.7rem;color:var(--text);font-family:inherit;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:flex-start;gap:0.22rem;position:relative;overflow:hidden;}
+.service-name{font-size:0.85rem;font-weight:700;}
+.service-price{font-size:1.15rem;font-weight:900;color:var(--yellow);font-family:var(--font-en);}
+.service-price span{font-size:0.62rem;color:var(--muted);font-weight:400;}
+.service-btn.selected{border-color:var(--yellow);background:rgba(255,214,0,0.07);}
+.service-btn:active{transform:scale(0.97);}
+.service-icon{position:absolute;right:0.7rem;top:50%;transform:translateY(-50%);font-size:1.6rem;opacity:0.18;}
+body.lang-ku .service-icon{right:auto;left:0.7rem;}
+.custom-price-row{display:flex;gap:0.5rem;align-items:center;}
+.custom-input{flex:1;background:var(--surface2);border:2px solid var(--border);border-radius:11px;padding:0.72rem 0.9rem;color:var(--text);font-family:var(--font-en);font-size:0.92rem;font-weight:700;direction:ltr;text-align:center;}
+.custom-input:focus{outline:none;border-color:var(--accent);}
+.custom-input::placeholder{color:var(--muted);font-size:0.78rem;}
+.confirm-btn{width:100%;padding:1rem;border-radius:14px;border:none;background:linear-gradient(135deg,#00e676,#00c853);color:#000;font-family:inherit;font-size:1.05rem;font-weight:900;cursor:pointer;transition:all 0.2s;box-shadow:0 5px 20px rgba(0,230,118,0.28);display:flex;align-items:center;justify-content:center;gap:0.45rem;}
+.confirm-btn:active{transform:scale(0.98);box-shadow:none;}
+.confirm-btn:disabled{background:var(--surface2);color:var(--muted);box-shadow:none;cursor:not-allowed;}
+
+/* SUCCESS */
+#screen-success{align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#001a0e 0%,#0a0f1a 70%);padding:2rem;text-align:center;}
+.success-icon{font-size:4rem;animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);margin-bottom:0.7rem;filter:drop-shadow(0 0 25px rgba(0,230,118,0.5));}
+@keyframes popIn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.success-title{font-size:1.6rem;font-weight:900;color:var(--green);margin-bottom:0.22rem;}
+.success-sub{color:var(--muted);font-size:0.82rem;margin-bottom:1.4rem;}
+.receipt{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1rem;width:100%;max-width:300px;margin-bottom:1.4rem;}
+.receipt-row{display:flex;justify-content:space-between;align-items:center;padding:0.42rem 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.82rem;}
+.receipt-row:last-child{border-bottom:none;}.receipt-label{color:var(--muted);}
+.receipt-value{font-weight:700;font-family:var(--font-en);}
+.receipt-total .receipt-value{color:var(--yellow);font-size:1.05rem;font-weight:900;}
+.new-car-btn{width:100%;max-width:300px;padding:0.9rem;border-radius:12px;border:none;background:var(--accent);color:#000;font-family:inherit;font-size:1rem;font-weight:900;cursor:pointer;box-shadow:var(--glow);}
+.new-car-btn:active{transform:scale(0.97);}
+
+/* EXPENSES */
+#screen-expense{background:var(--bg);}
+.expense-content{flex:1;padding:0.9rem;display:flex;flex-direction:column;gap:0.9rem;overflow-y:auto;}
+.expense-form{background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:1rem;display:flex;flex-direction:column;gap:0.8rem;}
+.expense-categories{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;}
+.cat-btn{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:0.72rem 0.3rem;color:var(--text);font-family:inherit;font-size:0.76rem;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:0.25rem;text-align:center;}
+.cat-btn .cat-icon{font-size:1.35rem;}.cat-btn.selected{border-color:var(--orange);background:rgba(255,152,0,0.1);color:var(--orange);}
+.cat-btn:active{transform:scale(0.96);}
+.expense-input{background:var(--surface2);border:1.5px solid var(--border);border-radius:11px;padding:0.75rem 1rem;color:var(--text);font-family:var(--font-en);font-size:0.95rem;font-weight:700;width:100%;direction:ltr;text-align:center;}
+.expense-input:focus{outline:none;border-color:var(--orange);}
+.expense-input::placeholder{color:var(--muted);font-size:0.8rem;}
+.expense-note{background:var(--surface2);border:1.5px solid var(--border);border-radius:11px;padding:0.75rem 1rem;color:var(--text);font-family:inherit;font-size:0.88rem;width:100%;resize:none;}
+.expense-note:focus{outline:none;border-color:var(--orange);}
+.add-expense-btn{width:100%;padding:0.95rem;border-radius:13px;border:none;background:linear-gradient(135deg,var(--orange),#e65100);color:#000;font-family:inherit;font-size:1rem;font-weight:900;cursor:pointer;box-shadow:0 4px 16px rgba(255,152,0,0.28);transition:all 0.15s;}
+.add-expense-btn:active{transform:scale(0.97);}
+.add-expense-btn:disabled{background:var(--surface2);color:var(--muted);box-shadow:none;cursor:not-allowed;}
+
+/* REPORT */
+#screen-report{background:var(--bg);}
+.report-content{flex:1;padding:0.9rem;display:flex;flex-direction:column;gap:0.9rem;overflow-y:auto;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0.85rem;}
+.stat-card.wide{grid-column:1/-1;}
+.stat-label{font-size:0.65rem;color:var(--muted);margin-bottom:0.22rem;font-family:var(--font-en);text-transform:uppercase;letter-spacing:0.5px;}
+.stat-value{font-size:1.65rem;font-weight:900;color:var(--accent);font-family:var(--font-en);}
+.stat-value.green{color:var(--green);}.stat-value.yellow{color:var(--yellow);}.stat-value.red{color:var(--red);}.stat-value.orange{color:var(--orange);}
+.stat-sublabel{font-size:0.6rem;color:var(--muted);margin-top:0.1rem;font-family:var(--font-en);}
+.profit-bar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0.85rem;}
+.profit-bar-track{background:var(--surface2);border-radius:8px;height:9px;overflow:hidden;margin:0.5rem 0 0.25rem;}
+.profit-bar-fill{height:100%;border-radius:8px;transition:width 0.8s ease;background:linear-gradient(90deg,var(--green),#00c853);}
+.profit-bar-fill.loss{background:linear-gradient(90deg,var(--red),#c62828);}
+.profit-bar-labels{display:flex;justify-content:space-between;font-size:0.62rem;color:var(--muted);font-family:var(--font-en);}
+
+/* SHIFTS */
+.shift-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;}
+.shift-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0.85rem;}
+.shift-name{font-size:0.68rem;font-weight:700;color:var(--muted);font-family:var(--font-en);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.28rem;}
+.shift-cars{font-size:1.5rem;font-weight:900;color:var(--accent);font-family:var(--font-en);}
+.shift-revenue{font-size:0.78rem;color:var(--green);font-family:var(--font-en);margin-top:0.1rem;font-weight:700;}
+.shift-time{font-size:0.6rem;color:var(--muted);font-family:var(--font-en);}
+
+/* PERIOD & CHART */
+.period-tabs{display:flex;background:var(--surface2);border-radius:11px;padding:0.22rem;gap:0.22rem;}
+.period-tab{flex:1;padding:0.45rem;border:none;background:none;color:var(--muted);font-family:var(--font-en);font-size:0.73rem;font-weight:700;cursor:pointer;border-radius:9px;transition:all 0.15s;}
+.period-tab.active{background:var(--surface);color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,0.3);}
+.bar-chart{display:flex;align-items:flex-end;gap:0.28rem;height:75px;padding:0 0.2rem;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.18rem;}
+.bar{width:100%;border-radius:4px 4px 0 0;background:var(--accent);min-height:3px;opacity:0.8;}
+.bar.today{background:var(--green);opacity:1;}
+.bar-label{font-size:0.56rem;color:var(--muted);font-family:var(--font-en);}
+
+/* LOG LIST */
+.tab-strip{display:flex;background:var(--surface2);border-radius:11px;padding:0.22rem;gap:0.22rem;}
+.tab-strip-btn{flex:1;padding:0.45rem;border:none;background:none;color:var(--muted);font-family:inherit;font-size:0.73rem;font-weight:700;cursor:pointer;border-radius:9px;transition:all 0.15s;}
+.tab-strip-btn.active{background:var(--surface);color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,0.3);}
+.log-list{display:flex;flex-direction:column;gap:0.42rem;}
+.log-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:0.62rem 0.85rem;display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;}
+.log-item.expense-item{border-color:rgba(255,82,82,0.28);background:rgba(255,82,82,0.04);}
+.log-plate{font-weight:700;color:var(--accent);font-family:var(--font-en);}
+.log-meta{color:var(--muted);font-size:0.68rem;margin-top:0.12rem;}
+.log-price{font-weight:900;color:var(--yellow);font-family:var(--font-en);}
+.log-price.expense{color:var(--red);}
+.empty-log{text-align:center;color:var(--muted);padding:1.4rem;font-size:0.85rem;}
+
+/* SETTINGS */
+#screen-settings{background:var(--bg);}
+.settings-content{flex:1;padding:0.9rem;display:flex;flex-direction:column;gap:0.9rem;overflow-y:auto;}
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.settings-section-title{padding:0.65rem 1rem;font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);font-family:var(--font-en);}
+.worker-row{display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+.worker-row:last-child{border-bottom:none;}
+.worker-avatar{width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0;}
+.worker-info{flex:1;min-width:0;}
+.worker-name-text{font-size:0.85rem;font-weight:700;}
+.worker-role-text{font-size:0.65rem;color:var(--muted);}
+.worker-actions{display:flex;gap:0.32rem;}
+.small-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.32rem 0.55rem;font-size:0.7rem;font-weight:700;cursor:pointer;color:var(--text);font-family:inherit;transition:all 0.15s;white-space:nowrap;}
+.small-btn:active{transform:scale(0.96);}
+.small-btn.danger{color:var(--red);border-color:rgba(255,82,82,0.3);}
+.small-btn.accent{color:var(--accent);border-color:rgba(0,212,255,0.3);}
+.price-row{display:flex;align-items:center;gap:0.6rem;padding:0.62rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+.price-row:last-child{border-bottom:none;}
+.price-label{flex:1;font-size:0.82rem;font-weight:600;}
+.price-input{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:0.38rem 0.55rem;color:var(--text);font-family:var(--font-en);font-size:0.85rem;font-weight:700;width:95px;text-align:center;direction:ltr;}
+.price-input:focus{outline:none;border-color:var(--yellow);}
+.setting-row{display:flex;align-items:center;gap:0.6rem;padding:0.62rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+.setting-row:last-child{border-bottom:none;}
+.setting-label{font-size:0.82rem;font-weight:600;flex-shrink:0;}
+.setting-input{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:0.38rem 0.7rem;color:var(--text);font-family:inherit;font-size:0.82rem;font-weight:700;flex:1;text-align:center;}
+.setting-input:focus{outline:none;border-color:var(--accent);}
+.shift-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;padding:0.7rem 1rem;}
+.shift-config-item{display:flex;flex-direction:column;gap:0.22rem;}
+.shift-config-label{font-size:0.65rem;color:var(--muted);font-family:var(--font-en);}
+.shift-config-input{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:0.42rem 0.6rem;color:var(--text);font-family:var(--font-en);font-size:0.88rem;font-weight:700;text-align:center;direction:ltr;}
+.shift-config-input:focus{outline:none;border-color:var(--purple);}
+.save-btn{width:100%;padding:0.9rem;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-family:inherit;font-size:0.95rem;font-weight:900;cursor:pointer;box-shadow:var(--glow);transition:all 0.15s;}
+.save-btn:active{transform:scale(0.97);}
+.add-worker-btn{width:100%;padding:0.75rem;border-radius:10px;border:none;background:rgba(0,230,118,0.12);border:1.5px solid rgba(0,230,118,0.3);color:var(--green);font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;margin:0.5rem 1rem;width:calc(100% - 2rem);}
+.add-worker-btn:active{transform:scale(0.97);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:1.5rem;}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.3rem;width:100%;max-width:300px;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:1rem;}
+.modal-field{display:flex;flex-direction:column;gap:0.28rem;margin-bottom:0.65rem;}
+.modal-field label{font-size:0.65rem;font-weight:700;color:var(--muted);letter-spacing:1px;}
+.modal-input{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:0.7rem 0.9rem;color:var(--text);font-family:var(--font-en);font-size:0.92rem;font-weight:700;width:100%;direction:ltr;text-align:center;}
+.modal-input:focus{outline:none;border-color:var(--accent);}
+.modal-actions{display:flex;gap:0.5rem;margin-top:0.8rem;}
+.modal-btn{flex:1;padding:0.72rem;border-radius:10px;border:none;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.modal-btn.primary{background:var(--accent);color:#000;}.modal-btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.modal-btn:active{transform:scale(0.97);}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:0.6rem 1rem;font-size:0.8rem;font-weight:700;color:var(--text);z-index:999;transition:transform 0.3s ease;white-space:nowrap;box-shadow:0 8px 25px rgba(0,0,0,0.4);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error{border-color:var(--red);color:var(--red);}
+.toast.warn{border-color:var(--orange);color:var(--orange);}
+.spinner{width:20px;height:20px;border:3px solid rgba(0,212,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+canvas{display:none;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="lang-toggle">
+    <button class="lang-opt" onclick="setLang('ku')" id="lang-ku-btn">کو</button>
+    <button class="lang-opt active" onclick="setLang('en')" id="lang-en-btn">EN</button>
+  </div>
+  <div class="login-logo">🚗</div>
+  <div class="login-brand">ZirakPOS</div>
+  <div class="login-tagline" id="login-tagline">Smart Carwash System</div>
+  <div class="login-form">
+    <div class="login-field" id="step-username">
+      <label id="lbl-username">USERNAME</label>
+      <input class="login-input" id="username-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="username">
+      <button class="login-btn" onclick="goToPin()" id="btn-next">Next →</button>
+    </div>
+    <div class="login-field" id="step-pin" style="display:none;">
+      <label id="lbl-pin">ENTER YOUR PIN</label>
+      <div class="pin-dots">
+        <div class="pin-dot" id="dot0"></div><div class="pin-dot" id="dot1"></div>
+        <div class="pin-dot" id="dot2"></div><div class="pin-dot" id="dot3"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinPress('1')">1</button><button class="pin-key" onclick="pinPress('2')">2</button><button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button><button class="pin-key" onclick="pinPress('5')">5</button><button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button><button class="pin-key" onclick="pinPress('8')">8</button><button class="pin-key" onclick="pinPress('9')">9</button>
+        <button class="pin-key del" onclick="pinBack()">⌫</button>
+        <button class="pin-key zero" onclick="pinPress('0')">0</button>
+        <button class="pin-key back-btn" onclick="backToUsername()">↩</button>
+      </div>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="screen-main" class="screen">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-brand">ZirakPOS</div><div class="topbar-worker" id="topbar-worker-name"></div></div>
+    <div class="topbar-right">
+      <div class="icon-btn" onclick="toggleLang()">🌐</div>
+      <div class="icon-btn" onclick="logout()">🚪</div>
+    </div>
+  </div>
+  <div class="main-content">
+    <div class="camera-section">
+      <div class="camera-preview">
+        <video id="video-feed" autoplay playsinline muted></video>
+        <img id="photo-preview" alt="">
+        <div class="camera-idle" id="camera-idle"><div class="camera-idle-icon">📷</div><div class="camera-idle-text" id="cam-idle-text">Take a photo of the car</div></div>
+        <div class="scan-overlay" id="scan-overlay">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1.6rem;">
+            <div class="scan-box"><div class="scan-line"></div><div class="scan-label" id="scan-label-text">Reading plate...</div></div>
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ai-result" id="ai-result">
+        <div style="font-size:1.3rem;">🤖</div>
+        <div style="flex:1;"><div class="ai-plate" id="ai-plate-display">—</div><div class="ai-cartype" id="ai-type-display">—</div></div>
+        <div class="ai-badge">AI ✓</div>
+      </div>
+      <div class="camera-actions">
+        <button class="cam-btn cam-btn-primary" onclick="startCamera()">📷 <span id="btn-scan-text">Scan Car</span></button>
+        <button class="cam-btn cam-btn-secondary" onclick="resetCamera()">↺ <span id="btn-reset-text">Reset</span></button>
+      </div>
+    </div>
+    <div>
+      <div class="section-label" id="lbl-car-size">CAR SIZE</div>
+      <div class="size-grid">
+        <button class="size-btn" onclick="selectSize(this,'small')" data-size="small"><span class="size-icon">🚗</span><span id="size-small-lbl">Small</span></button>
+        <button class="size-btn" onclick="selectSize(this,'medium')" data-size="medium"><span class="size-icon">🚙</span><span id="size-medium-lbl">Medium</span></button>
+        <button class="size-btn" onclick="selectSize(this,'large')" data-size="large"><span class="size-icon">🚐</span><span id="size-large-lbl">Large/SUV</span></button>
+      </div>
+    </div>
+    <div>
+      <div class="section-label" id="lbl-service-type">SERVICE TYPE</div>
+      <div class="service-grid" id="service-grid"></div>
+      <div class="custom-price-row" style="margin-top:0.6rem;">
+        <input class="custom-input" id="custom-price-input" type="number" min="0" placeholder="Custom price (IQD)">
+        <button class="cam-btn cam-btn-secondary" style="flex:0;padding:0.7rem 0.85rem;" onclick="selectCustom()">✓</button>
+      </div>
+    </div>
+    <div style="padding-bottom:0.4rem;">
+      <button class="confirm-btn" id="confirm-btn" onclick="confirmEntry()" disabled>✅ <span id="btn-log-text">Log This Car</span></button>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-tab active" onclick="showMain()"><span class="tab-icon">🚗</span><span id="nav-log">Log Car</span></button>
+    <button class="nav-tab" onclick="showExpense()"><span class="tab-icon">💸</span><span id="nav-exp">Expenses</span></button>
+    <button class="nav-tab" onclick="showReport()"><span class="tab-icon">📊</span><span id="nav-rep">Report</span></button>
+    <button class="nav-tab" onclick="showSettings()"><span class="tab-icon">⚙️</span><span id="nav-set">Settings</span></button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div id="screen-success" class="screen">
+  <div class="success-icon">✅</div>
+  <div class="success-title" id="success-title">Logged!</div>
+  <div class="success-sub" id="success-sub">Car successfully recorded</div>
+  <div class="receipt">
+    <div class="receipt-row"><span class="receipt-label">Plate</span><span class="receipt-value" id="rec-plate">—</span></div>
+    <div class="receipt-row"><span class="receipt-label">Size</span><span class="receipt-value" id="rec-size">—</span></div>
+    <div class="receipt-row"><span class="receipt-label">Service</span><span class="receipt-value" id="rec-service">—</span></div>
+    <div class="receipt-row"><span class="receipt-label">Shift</span><span class="receipt-value" id="rec-shift">—</span></div>
+    <div class="receipt-row"><span class="receipt-label">Worker</span><span class="receipt-value" id="rec-worker">—</span></div>
+    <div class="receipt-row"><span class="receipt-label">Time</span><span class="receipt-value" id="rec-time">—</span></div>
+    <div class="receipt-row receipt-total"><span class="receipt-label">Total</span><span class="receipt-value" id="rec-total">—</span></div>
+  </div>
+  <button class="new-car-btn" onclick="newCar()">🚗 <span id="btn-newcar">New Car</span></button>
+</div>
+
+<!-- EXPENSES -->
+<div id="screen-expense" class="screen">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-brand">ZirakPOS</div><div class="topbar-worker">Log Expense</div></div>
+    <div class="topbar-right"><div class="icon-btn" onclick="showMain()">✕</div></div>
+  </div>
+  <div class="expense-content">
+    <div class="expense-form">
+      <div class="section-label">EXPENSE CATEGORY</div>
+      <div class="expense-categories">
+        <button class="cat-btn" onclick="selectCat(this,'soap')" data-cat="soap"><span class="cat-icon">🧴</span><span>Soap</span></button>
+        <button class="cat-btn" onclick="selectCat(this,'fuel')" data-cat="fuel"><span class="cat-icon">⛽</span><span>Fuel</span></button>
+        <button class="cat-btn" onclick="selectCat(this,'salary')" data-cat="salary"><span class="cat-icon">👷</span><span>Salary</span></button>
+        <button class="cat-btn" onclick="selectCat(this,'maintenance')" data-cat="maintenance"><span class="cat-icon">🔧</span><span>Maintenance</span></button>
+        <button class="cat-btn" onclick="selectCat(this,'water')" data-cat="water"><span class="cat-icon">💧</span><span>Water</span></button>
+        <button class="cat-btn" onclick="selectCat(this,'other')" data-cat="other"><span class="cat-icon">📦</span><span>Other</span></button>
+      </div>
+      <div>
+        <div class="section-label">AMOUNT (IQD)</div>
+        <input class="expense-input" id="expense-amount" type="number" min="0" placeholder="0">
+      </div>
+      <div>
+        <div class="section-label">NOTE (OPTIONAL)</div>
+        <textarea class="expense-note" id="expense-note" rows="2" placeholder="What was this for..."></textarea>
+      </div>
+      <button class="add-expense-btn" id="add-expense-btn" onclick="addExpense()" disabled>💸 Log Expense</button>
+    </div>
+    <div>
+      <div class="section-label">TODAY'S EXPENSES</div>
+      <div class="log-list" id="expense-list"><div class="empty-log">No expenses logged yet</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-tab" onclick="showMain()"><span class="tab-icon">🚗</span><span>Log Car</span></button>
+    <button class="nav-tab active" onclick="showExpense()"><span class="tab-icon">💸</span><span>Expenses</span></button>
+    <button class="nav-tab" onclick="showReport()"><span class="tab-icon">📊</span><span>Report</span></button>
+    <button class="nav-tab" onclick="showSettings()"><span class="tab-icon">⚙️</span><span>Settings</span></button>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="screen-report" class="screen">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-brand">ZirakPOS</div><div class="topbar-worker" id="rep-sub">Today's Report</div></div>
+    <div class="topbar-right"><div class="icon-btn" onclick="logout()">🚪</div></div>
+  </div>
+  <div class="report-content">
+    <div class="period-tabs">
+      <button class="period-tab active" onclick="setPeriod('today',this)">Today</button>
+      <button class="period-tab" onclick="setPeriod('week',this)">This Week</button>
+      <button class="period-tab" onclick="setPeriod('month',this)">This Month</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">CARS WASHED</div><div class="stat-value" id="stat-cars">0</div></div>
+      <div class="stat-card"><div class="stat-label">REVENUE</div><div class="stat-value green" id="stat-revenue">0</div><div class="stat-sublabel">IQD</div></div>
+      <div class="stat-card"><div class="stat-label">EXPENSES</div><div class="stat-value red" id="stat-expenses">0</div><div class="stat-sublabel">IQD</div></div>
+      <div class="stat-card"><div class="stat-label">NET PROFIT</div><div class="stat-value yellow" id="stat-profit">0</div><div class="stat-sublabel">IQD</div></div>
+    </div>
+    <div class="profit-bar-wrap">
+      <div class="stat-label">PROFIT MARGIN</div>
+      <div class="profit-bar-track"><div class="profit-bar-fill" id="profit-bar" style="width:0%"></div></div>
+      <div class="profit-bar-labels"><span>Expenses</span><span id="profit-pct">0%</span><span>Revenue</span></div>
+    </div>
+    <div id="shift-section">
+      <div class="section-label">SHIFT BREAKDOWN — TODAY</div>
+      <div class="shift-grid" id="shift-grid"></div>
+    </div>
+    <div id="chart-section" style="display:none;">
+      <div class="section-label">DAILY REVENUE — THIS WEEK</div>
+      <div class="stat-card"><div class="bar-chart" id="bar-chart"></div></div>
+    </div>
+    <div class="tab-strip">
+      <button class="tab-strip-btn active" onclick="switchLogTab('cars',this)">🚗 Cars</button>
+      <button class="tab-strip-btn" onclick="switchLogTab('expenses',this)">💸 Expenses</button>
+    </div>
+    <div class="log-list" id="report-log-list"><div class="empty-log">No records yet</div></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-tab" onclick="showMain()"><span class="tab-icon">🚗</span><span>Log Car</span></button>
+    <button class="nav-tab" onclick="showExpense()"><span class="tab-icon">💸</span><span>Expenses</span></button>
+    <button class="nav-tab active" onclick="showReport()"><span class="tab-icon">📊</span><span>Report</span></button>
+    <button class="nav-tab" onclick="showSettings()"><span class="tab-icon">⚙️</span><span>Settings</span></button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="screen-settings" class="screen">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-brand">ZirakPOS</div><div class="topbar-worker">Settings</div></div>
+    <div class="topbar-right"><div class="icon-btn" onclick="showMain()">✕</div></div>
+  </div>
+  <div class="settings-content">
+    <div class="settings-section">
+      <div class="settings-section-title">🏢 Business</div>
+      <div class="setting-row"><span class="setting-label">Business Name</span><input class="setting-input" id="setting-biz-name" type="text" placeholder="My Carwash"></div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">🕐 Shift Hours</div>
+      <div class="shift-config-grid">
+        <div class="shift-config-item"><div class="shift-config-label">Morning Start (hr)</div><input class="shift-config-input" id="shift-morning-start" type="number" min="0" max="23" value="6"></div>
+        <div class="shift-config-item"><div class="shift-config-label">Morning End (hr)</div><input class="shift-config-input" id="shift-morning-end" type="number" min="0" max="23" value="14"></div>
+        <div class="shift-config-item"><div class="shift-config-label">Evening Start (hr)</div><input class="shift-config-input" id="shift-evening-start" type="number" min="0" max="23" value="14"></div>
+        <div class="shift-config-item"><div class="shift-config-label">Evening End (hr)</div><input class="shift-config-input" id="shift-evening-end" type="number" min="0" max="23" value="23"></div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">💰 Service Prices (IQD)</div>
+      <div id="price-settings-list"></div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">👷 Workers</div>
+      <div id="worker-settings-list"></div>
+      <button class="add-worker-btn" onclick="openAddWorker()">+ Add Worker</button>
+    </div>
+    <button class="save-btn" onclick="saveSettings()">💾 Save All Settings</button>
+    <div style="height:1rem;"></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-tab" onclick="showMain()"><span class="tab-icon">🚗</span><span>Log Car</span></button>
+    <button class="nav-tab" onclick="showExpense()"><span class="tab-icon">💸</span><span>Expenses</span></button>
+    <button class="nav-tab" onclick="showReport()"><span class="tab-icon">📊</span><span>Report</span></button>
+    <button class="nav-tab active" onclick="showSettings()"><span class="tab-icon">⚙️</span><span>Settings</span></button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="worker-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Add Worker</div>
+    <div class="modal-field"><label>FULL NAME</label><input class="modal-input" id="modal-name" type="text" placeholder="e.g. Ahmed"></div>
+    <div class="modal-field"><label>USERNAME</label><input class="modal-input" id="modal-username" type="text" placeholder="e.g. ahmed1" autocomplete="off"></div>
+    <div class="modal-field"><label>4-DIGIT PIN</label><input class="modal-input" id="modal-pin" type="number" placeholder="e.g. 1234"></div>
+    <div class="modal-field">
+      <label>ROLE</label>
+      <select class="modal-input" id="modal-role" style="cursor:pointer;">
+        <option value="worker">Worker</option>
+        <option value="owner">Owner (Admin)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveWorker()" id="modal-save-btn">Add</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="hidden-file-input" accept="image/*" capture="environment">
+<canvas id="hidden-canvas"></canvas>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ DEFAULTS ══
+const DEFAULT_ACCOUNTS=[
+  {username:'admin',  pin:'0000',role:'owner', name:'Admin'},
+  {username:'worker1',pin:'1111',role:'worker',name:'Worker 1'},
+  {username:'worker2',pin:'2222',role:'worker',name:'Worker 2'},
+  {username:'worker3',pin:'3333',role:'worker',name:'Worker 3'},
+  {username:'worker4',pin:'4444',role:'worker',name:'Worker 4'},
+  {username:'worker5',pin:'5555',role:'worker',name:'Worker 5'},
+  {username:'worker6',pin:'6666',role:'worker',name:'Worker 6'},
+];
+const DEFAULT_SERVICES={
+  small: [{name:'Basic Wash',price:3000},{name:'Full Wash',price:5000},{name:'Interior',price:7000},{name:'Premium',price:10000}],
+  medium:[{name:'Basic Wash',price:4000},{name:'Full Wash',price:7000},{name:'Interior',price:10000},{name:'Premium',price:15000}],
+  large: [{name:'Basic Wash',price:5000},{name:'Full Wash',price:10000},{name:'Interior',price:15000},{name:'Premium',price:20000}],
+};
+const DEFAULT_SHIFTS={morning:{start:6,end:14},evening:{start:14,end:23}};
+const CAT_ICONS={soap:'🧴',fuel:'⛽',salary:'👷',maintenance:'🔧',water:'💧',other:'📦'};
+
+// ══ SUPABASE ══
+const SB_URL='https://fvkreujvlfrkgpehukuy.supabase.co';
+const SB_KEY='sb_publishable_hNnm74maABfbzHFn7CEflQ__FdrT60C';
+
+async function sbFetch(path,opts={}){
+  const res=await fetch(SB_URL+'/rest/v1/'+path,{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
+    ...opts
+  });
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  const txt=await res.text();return txt?JSON.parse(txt):[];
+}
+
+// ── Accounts ──
+async function getAccounts(){
+  try{const rows=await sbFetch('accounts?select=*&order=created_at.asc');return rows.length?rows:DEFAULT_ACCOUNTS;}
+  catch{return DEFAULT_ACCOUNTS;}
+}
+async function saveAccounts(accounts){
+  // Upsert all accounts
+  try{await sbFetch('accounts?on_conflict=username',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(accounts)});}
+  catch(e){console.error('saveAccounts',e);}
+}
+async function addAccount(acct){
+  try{await sbFetch('accounts',{method:'POST',body:JSON.stringify(acct)});}
+  catch(e){console.error('addAccount',e);}
+}
+async function updateAccount(username,acct){
+  try{await sbFetch('accounts?username=eq.'+encodeURIComponent(username),{method:'PATCH',body:JSON.stringify(acct)});}
+  catch(e){console.error('updateAccount',e);}
+}
+async function deleteAccount(username){
+  try{await sbFetch('accounts?username=eq.'+encodeURIComponent(username),{method:'DELETE'});}
+  catch(e){console.error('deleteAccount',e);}
+}
+
+// ── Settings ──
+let _settingsCache=null;
+async function getSettingsRow(){
+  if(_settingsCache)return _settingsCache;
+  try{const rows=await sbFetch('settings?id=eq.1&select=*');_settingsCache=rows[0]||{biz_name:'My Carwash',shifts:DEFAULT_SHIFTS,services:DEFAULT_SERVICES};return _settingsCache;}
+  catch{return{biz_name:'My Carwash',shifts:DEFAULT_SHIFTS,services:DEFAULT_SERVICES};}
+}
+async function patchSettings(patch){
+  _settingsCache=null;
+  try{await sbFetch('settings?id=eq.1',{method:'PATCH',body:JSON.stringify({...patch,updated_at:new Date().toISOString()})});}
+  catch(e){console.error('patchSettings',e);}
+}
+async function getServices(){const r=await getSettingsRow();return r.services&&Object.keys(r.services).length?r.services:DEFAULT_SERVICES;}
+async function saveServices(sv){await patchSettings({services:sv});}
+async function getShiftsCfg(){const r=await getSettingsRow();return r.shifts||DEFAULT_SHIFTS;}
+async function saveShiftsCfg(sh){await patchSettings({shifts:sh});}
+async function getBizName(){const r=await getSettingsRow();return r.biz_name||'My Carwash';}
+async function saveBizName(n){await patchSettings({biz_name:n});}
+
+// ── Car Logs ──
+const todayKey=new Date().toISOString().slice(0,10); // YYYY-MM-DD
+async function getLogsFor(dateStr){
+  // dateStr: YYYY-MM-DD or legacy toDateString — normalise
+  const d=normDate(dateStr);
+  try{return await sbFetch('car_logs?log_date=eq.'+d+'&order=created_at.asc&select=*');}
+  catch{return[];}
+}
+async function saveCarLog(entry){
+  try{await sbFetch('car_logs',{method:'POST',body:JSON.stringify({
+    plate:entry.plate,size:entry.size,service:entry.service,
+    price:entry.price,worker:entry.worker,shift:entry.shift,
+    log_date:todayKey
+  })});}
+  catch(e){console.error('saveCarLog',e);}
+}
+
+// ── Expenses ──
+async function getExpFor(dateStr){
+  const d=normDate(dateStr);
+  try{return await sbFetch('expenses?log_date=eq.'+d+'&order=created_at.asc&select=*');}
+  catch{return[];}
+}
+async function saveExpense(exp){
+  try{await sbFetch('expenses',{method:'POST',body:JSON.stringify({
+    cat:exp.cat,amount:exp.amount,note:exp.note||'',worker:exp.worker,log_date:todayKey
+  })});}
+  catch(e){console.error('saveExpense',e);}
+}
+
+// ── Date helpers ──
+function normDate(d){
+  // Accept YYYY-MM-DD or JS toDateString
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d;
+  const dt=new Date(d);
+  return dt.toISOString().slice(0,10);
+}
+function getDateKeys(period){
+  const keys=[];const now=new Date();
+  const days=period==='today'?0:period==='week'?6:29;
+  for(let i=days;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);keys.push(d.toISOString().slice(0,10));}
+  return keys;
+}
+
+// ── Loading state ──
+function showLoading(msg='Loading...'){
+  let el=document.getElementById('loading-overlay');
+  if(!el){el=document.createElement('div');el.id='loading-overlay';el.style.cssText='position:fixed;inset:0;background:rgba(10,15,26,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:1rem;';
+  el.innerHTML='<div class="spinner"></div><div style="color:var(--muted);font-size:0.85rem;font-family:var(--font-en)">'+msg+'</div>';document.body.appendChild(el);}
+  else{el.querySelector('div+div').textContent=msg;el.style.display='flex';}
+}
+function hideLoading(){const el=document.getElementById('loading-overlay');if(el)el.style.display='none';}
+
+// ══ STATE ══
+let currentWorker='',currentRole='',currentLang='en';
+let selectedSize='',selectedService='',selectedPrice=0;
+let selectedCat='',detectedPlate='';
+let currentLogTab='cars',currentPeriod='today';
+let editingWorkerIdx=null;
+let pinValue='',pendingUsername='';
+
+// ══ LANG ══
+const KU={
+  tagline:'سیستەمی مەشخەنەی زیرەک',username:'ناوی بەکارهێنەر',pin:'پینەکەت داخڵ بکە',next:'دواتر ←',
+  carSize:'جۆری ئۆتۆمبێل',serviceType:'جۆری خزمەتگوزاری',logCar:'تۆماری بکە',
+  scanCar:'وێنە بکە',reset:'سڕینەوە',readingPlate:'خوێندنەوەی پلاکە...',
+  small:'بچووک',medium:'مامناوەند',large:'گەورە/SUV',
+  loggedTitle:'تۆمارکرا!',loggedSub:'ئۆتۆمبێلەکە بە سەرکەوتوویی تۆمارکرا',newCar:'ئۆتۆمبێلی نوێ',
+  morning:'بەیانی',evening:'ئێواران',
+  wrongPin:'❌ پینەکە هەڵەیە',noUser:'ناوی بەکارهێنەر نەدۆزرایەوە',
+  plateRead:'✅ پلاک خوێندرایەوە!',customOk:'✓ نرخی تر دیاریکرا',
+  customErr:'نرخێکی دروست بنووسە',loggedOk:'✅ تۆمارکرا!',
+  expOk:'💸 خەرجی تۆمارکرا!',saved:'✅ پاشەکەوتکرا!',
+  workerAdded:'✅ کارمەند زیادکرا!',workerUpdated:'✅ نوێکرایەوە!',workerDeleted:'کارمەند سڕایەوە',
+  fillFields:'زانیاریەکان پڕ بکەرەوە',fillPin:'PIN دەبێت ٤ ژمارە بێت',currency:'دینار',
+};
+const EN={
+  tagline:'Smart Carwash System',username:'USERNAME',pin:'ENTER YOUR PIN',next:'Next →',
+  carSize:'CAR SIZE',serviceType:'SERVICE TYPE',logCar:'Log This Car',
+  scanCar:'Scan Car',reset:'Reset',readingPlate:'Reading plate...',
+  small:'Small',medium:'Medium',large:'Large/SUV',
+  loggedTitle:'Logged!',loggedSub:'Car successfully recorded',newCar:'New Car',
+  morning:'Morning',evening:'Evening',
+  wrongPin:'❌ Wrong PIN, try again',noUser:'Username not found',
+  plateRead:'✅ Plate detected!',customOk:'✓ Custom price set',
+  customErr:'Enter a valid price',loggedOk:'✅ Car logged!',
+  expOk:'💸 Expense logged!',saved:'✅ Saved!',
+  workerAdded:'✅ Worker added!',workerUpdated:'✅ Updated!',workerDeleted:'Worker removed',
+  fillFields:'Fill all required fields',fillPin:'PIN must be 4 digits',currency:'IQD',
+};
+function s(k){return(currentLang==='ku'?KU:EN)[k]||(EN[k]||k);}
+
+function setLang(lang){
+  currentLang=lang;
+  document.body.classList.toggle('lang-ku',lang==='ku');
+  document.documentElement.dir=lang==='ku'?'rtl':'ltr';
+  document.getElementById('lang-ku-btn').classList.toggle('active',lang==='ku');
+  document.getElementById('lang-en-btn').classList.toggle('active',lang==='en');
+  applyLangStrings();
+}
+function toggleLang(){setLang(currentLang==='en'?'ku':'en');}
+function applyLangStrings(){
+  const ids={
+    'login-tagline':'tagline','lbl-username':'username','lbl-pin':'pin','btn-next':'next',
+    'cam-idle-text':'scanCar','scan-label-text':'readingPlate',
+    'btn-scan-text':'scanCar','btn-reset-text':'reset',
+    'lbl-car-size':'carSize','lbl-service-type':'serviceType','btn-log-text':'logCar',
+    'size-small-lbl':'small','size-medium-lbl':'medium','size-large-lbl':'large',
+    'success-title':'loggedTitle','success-sub':'loggedSub','btn-newcar':'newCar',
+  };
+  Object.entries(ids).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.textContent=s(key);});
+  if(selectedSize)renderServices(selectedSize);
+}
+
+// ══ LOGIN ══
+let _accounts=null; // cache for session
+async function loadAccounts(){if(!_accounts)_accounts=await getAccounts();return _accounts;}
+
+function goToPin(){
+  const input=document.getElementById('username-input');
+  const uname=input.value.trim().toLowerCase();
+  if(!uname){input.classList.add('error');return;}
+  input.classList.remove('error');
+  // Check against cached accounts - loaded on init
+  const acct=(_accounts||DEFAULT_ACCOUNTS).find(a=>a.username.toLowerCase()===uname);
+  if(!acct){input.classList.add('error');showToast(s('noUser'),'error');setTimeout(()=>input.classList.remove('error'),1500);return;}
+  pendingUsername=uname;pinValue='';updatePinDots();
+  document.getElementById('step-username').style.display='none';
+  document.getElementById('step-pin').style.display='flex';
+  document.getElementById('login-error').textContent='';
+}
+function backToUsername(){
+  pinValue='';pendingUsername='';updatePinDots();
+  document.getElementById('step-pin').style.display='none';
+  document.getElementById('step-username').style.display='flex';
+  document.getElementById('login-error').textContent='';
+}
+function pinPress(d){if(pinValue.length>=4)return;pinValue+=d;updatePinDots();if(pinValue.length===4)setTimeout(attemptLogin,150);}
+function pinBack(){pinValue=pinValue.slice(0,-1);updatePinDots();}
+function updatePinDots(){for(let i=0;i<4;i++)document.getElementById('dot'+i).classList.toggle('filled',i<pinValue.length);}
+function attemptLogin(){
+  const acct=(_accounts||DEFAULT_ACCOUNTS).find(a=>a.username.toLowerCase()===pendingUsername&&a.pin===String(pinValue));
+  if(!acct){
+    pinValue='';updatePinDots();
+    document.getElementById('login-error').textContent=s('wrongPin');
+    const dots=document.querySelector('.pin-dots');
+    dots.style.animation='none';dots.offsetWidth;dots.style.animation='shake 0.4s ease';
+    return;
+  }
+  currentWorker=acct.name;currentRole=acct.role;
+  document.getElementById('topbar-worker-name').textContent='👷 '+acct.name;
+  pinValue='';pendingUsername='';
+  document.getElementById('username-input').value='';
+  updatePinDots();
+  document.getElementById('step-pin').style.display='none';
+  document.getElementById('step-username').style.display='flex';
+  document.getElementById('login-error').textContent='';
+  acct.role==='owner'?showReport():showMain();
+}
+function logout(){currentWorker='';currentRole='';showScreen('screen-login');resetAll();}
+
+// ══ SCREENS ══
+function showScreen(id){document.querySelectorAll('.screen').forEach(sc=>sc.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showMain(){showScreen('screen-main');}
+async function showExpense(){showScreen('screen-expense');await updateExpenseList();}
+async function showReport(){currentPeriod='today';document.querySelectorAll('.period-tab').forEach((b,i)=>b.classList.toggle('active',i===0));showScreen('screen-report');await updateReport();}
+async function showSettings(){showScreen('screen-settings');await loadSettingsUI();}
+
+// ══ SHIFTS ══
+function getCurrentShift(){
+  const sh=getShiftsCfg();const h=new Date().getHours();
+  if(h>=sh.morning.start&&h<sh.morning.end)return'morning';
+  if(h>=sh.evening.start&&h<=sh.evening.end)return'evening';
+  return'other';
+}
+function shiftLabel(k){return k==='morning'?s('morning'):k==='evening'?s('evening'):k;}
+
+// ══ CAMERA ══
+function startCamera(){const fi=document.getElementById('hidden-file-input');fi.onchange=handlePhoto;fi.click();}
+function handlePhoto(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const prev=document.getElementById('photo-preview');
+    prev.src=ev.target.result;prev.style.display='block';
+    document.getElementById('camera-idle').style.display='none';
+    document.getElementById('scan-overlay').classList.add('active');
+    setTimeout(()=>{document.getElementById('scan-overlay').classList.remove('active');simulatePlate();},2200);
+  };
+  reader.readAsDataURL(file);e.target.value='';
+}
+function simulatePlate(){
+  const nums=['١٢','٣٧','٥٤','٨٩','٢١','٦٦','44','17','82'];
+  const lets=['ک','م','ب','ر','ه'];
+  const cities=['Erbil','Sulaymaniyah','Duhok'];
+  const sizes=['small','medium','large'];
+  detectedPlate=nums[Math.floor(Math.random()*nums.length)]+' '+lets[Math.floor(Math.random()*lets.length)]+' '+cities[Math.floor(Math.random()*cities.length)];
+  const detected=sizes[Math.floor(Math.random()*sizes.length)];
+  document.getElementById('ai-plate-display').textContent=detectedPlate;
+  document.getElementById('ai-type-display').textContent='🚗 '+s(detected);
+  document.getElementById('ai-result').classList.add('show');
+  document.querySelectorAll('.size-btn').forEach(btn=>{if(btn.dataset.size===detected)selectSize(btn,detected);});
+  showToast(s('plateRead'),'success');
+}
+function resetCamera(){
+  document.getElementById('photo-preview').style.display='none';
+  document.getElementById('camera-idle').style.display='flex';
+  document.getElementById('ai-result').classList.remove('show');
+  document.getElementById('scan-overlay').classList.remove('active');
+  detectedPlate='';
+}
+
+// ══ SIZE & SERVICE ══
+function selectSize(btn,size){
+  document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');selectedSize=size;selectedService='';selectedPrice=0;
+  renderServices(size);checkConfirm();
+}
+function renderServices(size){
+  const grid=document.getElementById('service-grid');
+  const svcs=getServices()[size]||[];
+  const icons=['🫧','💧','✨','⭐'];
+  grid.innerHTML=svcs.map((sv,i)=>`
+    <button class="service-btn" onclick="selectService(this,'${sv.name.replace(/'/g,"\\'")}',${sv.price})">
+      <span class="service-icon">${icons[i]||'🚿'}</span>
+      <span class="service-name">${sv.name}</span>
+      <span class="service-price">${sv.price.toLocaleString()} <span>${s('currency')}</span></span>
+    </button>`).join('');
+}
+function selectService(btn,name,price){
+  document.querySelectorAll('.service-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');selectedService=name;selectedPrice=price;
+  document.getElementById('custom-price-input').value='';checkConfirm();
+}
+function selectCustom(){
+  const val=parseInt(document.getElementById('custom-price-input').value);
+  if(!val||val<=0){showToast(s('customErr'),'error');return;}
+  document.querySelectorAll('.service-btn').forEach(b=>b.classList.remove('selected'));
+  selectedService='Custom ('+val.toLocaleString()+')';selectedPrice=val;
+  checkConfirm();showToast(s('customOk'),'success');
+}
+function checkConfirm(){document.getElementById('confirm-btn').disabled=!(selectedSize&&selectedService&&selectedPrice>0);}
+
+// ══ LOG CAR ══
+async function confirmEntry(){
+  const now=new Date();
+  const shift=getCurrentShift();
+  const entry={plate:detectedPlate||'—',size:selectedSize,service:selectedService,price:selectedPrice,worker:currentWorker,shift,time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+  showLoading('Saving...');
+  await saveCarLog(entry);
+  hideLoading();
+  document.getElementById('rec-plate').textContent=entry.plate;
+  document.getElementById('rec-size').textContent=s(selectedSize);
+  document.getElementById('rec-service').textContent=entry.service;
+  document.getElementById('rec-shift').textContent=shiftLabel(shift);
+  document.getElementById('rec-worker').textContent=entry.worker;
+  document.getElementById('rec-time').textContent=entry.time;
+  document.getElementById('rec-total').textContent=entry.price.toLocaleString()+' '+s('currency');
+  showScreen('screen-success');
+}
+function newCar(){resetAll();showScreen('screen-main');}
+function resetAll(){
+  resetCamera();selectedSize='';selectedService='';selectedPrice=0;
+  document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('service-grid').innerHTML='';
+  document.getElementById('custom-price-input').value='';checkConfirm();
+}
+
+// ══ EXPENSES ══
+function selectCat(btn,cat){
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');selectedCat=cat;checkExpBtn();
+}
+function checkExpBtn(){
+  const amt=parseInt(document.getElementById('expense-amount').value);
+  document.getElementById('add-expense-btn').disabled=!(selectedCat&&amt>0);
+}
+async function addExpense(){
+  const amt=parseInt(document.getElementById('expense-amount').value);
+  const note=document.getElementById('expense-note').value.trim();
+  if(!selectedCat||!amt){showToast(s('fillFields'),'error');return;}
+  const now=new Date();
+  const exp={cat:selectedCat,amount:amt,note,worker:currentWorker,time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+  showLoading('Saving...');
+  await saveExpense(exp);
+  hideLoading();
+  showToast(s('expOk'),'warn');
+  selectedCat='';document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('expense-amount').value='';document.getElementById('expense-note').value='';
+  document.getElementById('add-expense-btn').disabled=true;
+  await updateExpenseList();
+}
+async function updateExpenseList(){
+  const el=document.getElementById('expense-list');
+  el.innerHTML='<div class="empty-log">Loading...</div>';
+  const exps=await getExpFor(todayKey);
+  if(!exps.length){el.innerHTML='<div class="empty-log">No expenses logged yet</div>';return;}
+  el.innerHTML=[...exps].reverse().map(e=>`
+    <div class="log-item expense-item">
+      <div><div class="log-plate">${CAT_ICONS[e.cat]||'📦'} ${e.cat}</div><div class="log-meta">${e.note||''} • ${e.worker} • ${new Date(e.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div>
+      <div class="log-price expense">−${e.amount.toLocaleString()}</div>
+    </div>`).join('');
+}
+
+// ══ REPORT ══
+function getDateKeys(period){
+  const keys=[];const now=new Date();
+  const days=period==='today'?0:period==='week'?6:29;
+  for(let i=days;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);keys.push(d.toISOString().slice(0,10));}
+  return keys;
+}
+
+async function setPeriod(period,btn){
+  currentPeriod=period;
+  document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('chart-section').style.display=period==='week'?'block':'none';
+  document.getElementById('shift-section').style.display=period==='today'?'block':'none';
+  await updateReport();
+}
+
+async function updateReport(){
+  showLoading('Loading report...');
+  const keys=getDateKeys(currentPeriod);
+  let allLogs=[],allExps=[];
+  await Promise.all(keys.map(async k=>{
+    const [logs,exps]=await Promise.all([getLogsFor(k),getExpFor(k)]);
+    allLogs=[...allLogs,...logs];allExps=[...allExps,...exps];
+  }));
+  hideLoading();
+  const revenue=allLogs.reduce((s,l)=>s+l.price,0);
+  const totalExp=allExps.reduce((s,e)=>s+e.amount,0);
+  const profit=revenue-totalExp;
+  document.getElementById('stat-cars').textContent=allLogs.length;
+  document.getElementById('stat-revenue').textContent=revenue.toLocaleString();
+  document.getElementById('stat-expenses').textContent=totalExp.toLocaleString();
+  const profEl=document.getElementById('stat-profit');
+  profEl.textContent=Math.abs(profit).toLocaleString();
+  profEl.className='stat-value '+(profit>=0?'yellow':'red');
+  const bar=document.getElementById('profit-bar');
+  const pct=revenue>0?Math.min(100,Math.round((profit/revenue)*100)):0;
+  bar.style.width=Math.max(0,pct)+'%';
+  bar.className='profit-bar-fill'+(profit<0?' loss':'');
+  document.getElementById('profit-pct').textContent=pct+'%';
+  if(currentPeriod==='today')renderShifts(allLogs);
+  if(currentPeriod==='week')renderBarChart(keys,allLogs);
+  renderLogTab(currentLogTab,allLogs,allExps);
+}
+
+function renderShifts(logs){
+  const sh=getShiftsCfg();
+  // getShiftsCfg is now async but we cache — use sync fallback
+  const shCfg=(typeof sh.then==='function')?DEFAULT_SHIFTS:sh;
+  document.getElementById('shift-grid').innerHTML=['morning','evening'].map(sk=>{
+    const shLogs=(logs||[]).filter(l=>l.shift===sk);
+    const rev=shLogs.reduce((s,l)=>s+l.price,0);
+    const cfg=shCfg[sk]||{start:0,end:12};
+    return`<div class="shift-card">
+      <div class="shift-name">${shiftLabel(sk)}</div>
+      <div class="shift-cars">${shLogs.length} <span style="font-size:0.72rem;color:var(--muted)">cars</span></div>
+      <div class="shift-revenue">${rev.toLocaleString()} ${s('currency')}</div>
+      <div class="shift-time">${cfg.start}:00 – ${cfg.end}:00</div>
+    </div>`;
+  }).join('');
+}
+
+function renderBarChart(keys,allLogs){
+  const chart=document.getElementById('bar-chart');
+  const vals=keys.map(k=>(allLogs||[]).filter(l=>l.log_date===k).reduce((s,l)=>s+l.price,0));
+  const maxVal=Math.max(...vals,1);
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  chart.innerHTML=keys.map((k,i)=>{
+    const pct=Math.max(3,Math.round((vals[i]/maxVal)*100));
+    return`<div class="bar-wrap"><div class="bar${k===todayKey?' today':''}" style="height:${pct}%"></div><div class="bar-label">${days[new Date(k).getDay()]}</div></div>`;
+  }).join('');
+}
+
+async function switchLogTab(tab,btn){
+  currentLogTab=tab;
+  document.querySelectorAll('.tab-strip-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  showLoading('Loading...');
+  const keys=getDateKeys(currentPeriod);
+  let allLogs=[],allExps=[];
+  await Promise.all(keys.map(async k=>{
+    const [logs,exps]=await Promise.all([getLogsFor(k),getExpFor(k)]);
+    allLogs=[...allLogs,...logs];allExps=[...allExps,...exps];
+  }));
+  hideLoading();
+  renderLogTab(tab,allLogs,allExps);
+}
+
+function renderLogTab(tab,allLogs,allExps){
+  const el=document.getElementById('report-log-list');
+  if(tab==='cars'){
+    if(!allLogs.length){el.innerHTML='<div class="empty-log">No records yet</div>';return;}
+    el.innerHTML=[...allLogs].reverse().map(l=>`
+      <div class="log-item">
+        <div><div class="log-plate">${l.plate}</div><div class="log-meta">${s(l.size)||l.size} • ${l.service} • ${shiftLabel(l.shift||'')} • ${l.worker} • ${l.time}</div></div>
+        <div class="log-price">+${l.price.toLocaleString()}</div>
+      </div>`).join('');
+  } else {
+    if(!allExps.length){el.innerHTML='<div class="empty-log">No expenses yet</div>';return;}
+    el.innerHTML=[...allExps].reverse().map(e=>`
+      <div class="log-item expense-item">
+        <div><div class="log-plate">${CAT_ICONS[e.cat]||'📦'} ${e.cat}</div><div class="log-meta">${e.note||''} • ${e.worker} • ${e.time}</div></div>
+        <div class="log-price expense">−${e.amount.toLocaleString()}</div>
+      </div>`).join('');
+  }
+}
+
+// ══ SETTINGS ══
+async function loadSettingsUI(){
+  showLoading('Loading settings...');
+  const [bizName,sh,svcs,accounts]=await Promise.all([getBizName(),getShiftsCfg(),getServices(),getAccounts()]);
+  _accounts=accounts;
+  hideLoading();
+  document.getElementById('setting-biz-name').value=bizName;
+  document.getElementById('shift-morning-start').value=sh.morning.start;
+  document.getElementById('shift-morning-end').value=sh.morning.end;
+  document.getElementById('shift-evening-start').value=sh.evening.start;
+  document.getElementById('shift-evening-end').value=sh.evening.end;
+  renderPriceSettings(svcs);renderWorkerSettings(accounts);
+}
+function renderPriceSettings(svcs){
+  svcs=svcs||DEFAULT_SERVICES;
+  const sizeNames={small:'Small Car',medium:'Medium Car',large:'Large / SUV'};
+  let html='';
+  Object.keys(svcs).forEach(size=>{
+    html+=`<div style="padding:0.45rem 1rem 0.15rem;font-size:0.65rem;color:var(--accent);font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);">${sizeNames[size]}</div>`;
+    svcs[size].forEach((sv,i)=>{
+      html+=`<div class="price-row"><span class="price-label">${sv.name}</span><input class="price-input" type="number" value="${sv.price}" data-size="${size}" data-idx="${i}" min="0"></div>`;
+    });
+  });
+  document.getElementById('price-settings-list').innerHTML=html;
+}
+function renderWorkerSettings(accounts){
+  accounts=accounts||_accounts||DEFAULT_ACCOUNTS;
+  document.getElementById('worker-settings-list').innerHTML=accounts.map((a,i)=>`
+    <div class="worker-row">
+      <div class="worker-avatar">${a.role==='owner'?'👑':'👷'}</div>
+      <div class="worker-info">
+        <div class="worker-name-text">${a.name}</div>
+        <div class="worker-role-text">@${a.username} • PIN: ${a.pin} • ${a.role}</div>
+      </div>
+      <div class="worker-actions">
+        <button class="small-btn accent" onclick="openEditWorker(${i})">Edit</button>
+        ${a.username!=='admin'?`<button class="small-btn danger" onclick="deleteWorker(${i})">✕</button>`:''}
+      </div>
+    </div>`).join('');
+}
+async function saveSettings(){
+  showLoading('Saving...');
+  await Promise.all([
+    saveBizName(document.getElementById('setting-biz-name').value.trim()||'My Carwash'),
+    saveShiftsCfg({
+      morning:{start:parseInt(document.getElementById('shift-morning-start').value)||6,end:parseInt(document.getElementById('shift-morning-end').value)||14},
+      evening:{start:parseInt(document.getElementById('shift-evening-start').value)||14,end:parseInt(document.getElementById('shift-evening-end').value)||23},
+    }),
+  ]);
+  const svcs=await getServices();
+  document.querySelectorAll('.price-input').forEach(inp=>{
+    const size=inp.dataset.size,idx=parseInt(inp.dataset.idx);
+    if(svcs[size]&&svcs[size][idx])svcs[size][idx].price=parseInt(inp.value)||0;
+  });
+  await saveServices(svcs);
+  hideLoading();showToast(s('saved'),'success');
+}
+
+// Worker modal
+function openAddWorker(){
+  editingWorkerIdx=null;
+  document.getElementById('modal-title').textContent='Add Worker';
+  document.getElementById('modal-save-btn').textContent='Add';
+  ['modal-name','modal-username','modal-pin'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-role').value='worker';
+  document.getElementById('worker-modal').classList.add('active');
+}
+function openEditWorker(idx){
+  editingWorkerIdx=idx;
+  const a=(_accounts||DEFAULT_ACCOUNTS)[idx];
+  document.getElementById('modal-title').textContent='Edit Worker';
+  document.getElementById('modal-save-btn').textContent='Save';
+  document.getElementById('modal-name').value=a.name;
+  document.getElementById('modal-username').value=a.username;
+  document.getElementById('modal-pin').value=a.pin;
+  document.getElementById('modal-role').value=a.role;
+  document.getElementById('worker-modal').classList.add('active');
+}
+function closeModal(){document.getElementById('worker-modal').classList.remove('active');}
+async function saveWorker(){
+  const name=document.getElementById('modal-name').value.trim();
+  const username=document.getElementById('modal-username').value.trim().toLowerCase();
+  const pin=String(document.getElementById('modal-pin').value).trim();
+  const role=document.getElementById('modal-role').value;
+  if(!name||!username){showToast(s('fillFields'),'error');return;}
+  if(pin.length!==4){showToast(s('fillPin'),'error');return;}
+  const accounts=_accounts||await getAccounts();
+  showLoading('Saving...');
+  if(editingWorkerIdx===null){
+    if(accounts.find(a=>a.username===username)){hideLoading();showToast('Username already taken','error');return;}
+    await addAccount({username,pin,role,name});
+    _accounts=null;showToast(s('workerAdded'),'success');
+  } else {
+    const oldUsername=accounts[editingWorkerIdx].username;
+    await updateAccount(oldUsername,{username,pin,role,name});
+    _accounts=null;showToast(s('workerUpdated'),'success');
+  }
+  hideLoading();closeModal();
+  _accounts=await getAccounts();
+  renderWorkerSettings(_accounts);
+}
+async function deleteWorker(idx){
+  const accounts=_accounts||DEFAULT_ACCOUNTS;
+  if(accounts[idx].username==='admin'){showToast('Cannot delete admin','error');return;}
+  showLoading('Deleting...');
+  await deleteAccount(accounts[idx].username);
+  _accounts=await getAccounts();
+  hideLoading();showToast(s('workerDeleted'),'warn');renderWorkerSettings(_accounts);
+}
+
+// ══ TOAST ══
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type;
+  void t.offsetWidth;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ══ INIT ══
+document.addEventListener('DOMContentLoaded',async()=>{
+  setLang('en');
+  showLoading('Connecting...');
+  _accounts=await loadAccounts();
+  hideLoading();
+  document.getElementById('username-input').addEventListener('keydown',e=>{if(e.key==='Enter')goToPin();});
+  document.getElementById('expense-amount').addEventListener('input',checkExpBtn);
+});
+</script>
+</body>
+</html>
