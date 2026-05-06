@@ -49,7 +49,7 @@ body.lang-ku .lang-toggle{right:auto;left:1.1rem;}
 .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;}
 .pin-key{background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:0.9rem;color:var(--text);font-family:var(--font-en);font-size:1.2rem;font-weight:700;cursor:pointer;transition:background 0.12s,transform 0.12s;text-align:center;touch-action:manipulation;user-select:none;-webkit-user-select:none;}
 .pin-key:active{background:var(--accent);color:#000;border-color:var(--accent);transform:scale(0.93);}
-.pin-key.del{color:var(--red);font-size:0.9rem;}.pin-key.zero{grid-column:2;}.pin-key.back-btn{font-size:0.72rem;color:var(--muted);}
+.pin-key.del{color:var(--red);font-size:0.9rem;}.pin-key.back-btn{font-size:0.72rem;color:var(--muted);}
 /* Prevent iOS zoom on input focus — must be 16px+ */
 .login-input,.custom-input,.expense-input,.expense-note,.setting-input,.shift-config-input,.price-input,.modal-input{font-size:16px !important;}
 .login-error{color:var(--red);font-size:0.78rem;text-align:center;min-height:1rem;font-weight:700;}
@@ -288,12 +288,18 @@ canvas{display:none;}
         <div class="pin-dot" id="dot2"></div><div class="pin-dot" id="dot3"></div>
       </div>
       <div class="pin-pad">
-        <button class="pin-key" onclick="pinPress('1')">1</button><button class="pin-key" onclick="pinPress('2')">2</button><button class="pin-key" onclick="pinPress('3')">3</button>
-        <button class="pin-key" onclick="pinPress('4')">4</button><button class="pin-key" onclick="pinPress('5')">5</button><button class="pin-key" onclick="pinPress('6')">6</button>
-        <button class="pin-key" onclick="pinPress('7')">7</button><button class="pin-key" onclick="pinPress('8')">8</button><button class="pin-key" onclick="pinPress('9')">9</button>
-        <button class="pin-key del" onclick="pinBack()">⌫</button>
-        <button class="pin-key zero" onclick="pinPress('0')">0</button>
+        <button class="pin-key" onclick="pinPress('1')">1</button>
+        <button class="pin-key" onclick="pinPress('2')">2</button>
+        <button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button>
+        <button class="pin-key" onclick="pinPress('5')">5</button>
+        <button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button>
+        <button class="pin-key" onclick="pinPress('8')">8</button>
+        <button class="pin-key" onclick="pinPress('9')">9</button>
         <button class="pin-key back-btn" onclick="backToUsername()">↩</button>
+        <button class="pin-key" onclick="pinPress('0')">0</button>
+        <button class="pin-key del" onclick="pinBack()">⌫</button>
       </div>
       <div class="login-error" id="login-error"></div>
     </div>
@@ -752,6 +758,8 @@ function attemptLogin(){
   }
   currentWorker=acct.name;currentRole=acct.role;
   document.getElementById('topbar-worker-name').textContent='👷 '+acct.name;
+  // Save session so refresh doesn't log out
+  localStorage.setItem('cz_session',JSON.stringify({worker:acct.name,role:acct.role,username:acct.username}));
   pinValue='';pendingUsername='';
   document.getElementById('username-input').value='';
   updatePinDots();
@@ -760,7 +768,11 @@ function attemptLogin(){
   document.getElementById('login-error').textContent='';
   acct.role==='owner'?showReport():showMain();
 }
-function logout(){currentWorker='';currentRole='';showScreen('screen-login');resetAll();}
+function logout(){
+  currentWorker='';currentRole='';
+  localStorage.removeItem('cz_session');
+  showScreen('screen-login');resetAll();
+}
 
 // ══ SCREENS ══
 function showScreen(id){document.querySelectorAll('.screen').forEach(sc=>sc.classList.remove('active'));document.getElementById(id).classList.add('active');}
@@ -771,7 +783,9 @@ async function showSettings(){showScreen('screen-settings');await loadSettingsUI
 
 // ══ SHIFTS ══
 function getCurrentShift(){
-  const sh=getShiftsCfg();const h=new Date().getHours();
+  // Use cached settings synchronously — _settingsCache is loaded on init
+  const sh=(_settingsCache&&_settingsCache.shifts)||DEFAULT_SHIFTS;
+  const h=new Date().getHours();
   if(h>=sh.morning.start&&h<sh.morning.end)return'morning';
   if(h>=sh.evening.start&&h<=sh.evening.end)return'evening';
   return'other';
@@ -1146,12 +1160,34 @@ document.addEventListener('DOMContentLoaded',async()=>{
     if(now-lastTap<300){e.preventDefault();}
     lastTap=now;
   },{passive:false});
+
   setLang('en');
   showLoading('Connecting...');
-  // Load accounts and cache services in parallel
-  const [accts] = await Promise.all([loadAccounts(), getServices()]);
+
+  // Load accounts and settings in parallel — cache both
+  const [accts] = await Promise.all([loadAccounts(), getSettingsRow()]);
   _accounts = accts;
   hideLoading();
+
+  // Restore session — so refresh doesn't log out
+  const session=localStorage.getItem('cz_session');
+  if(session){
+    try{
+      const {worker,role,username}=JSON.parse(session);
+      // Verify account still exists
+      const acct=_accounts.find(a=>a.username===username);
+      if(acct){
+        currentWorker=worker;currentRole=role;
+        document.getElementById('topbar-worker-name').textContent='👷 '+worker;
+        role==='owner'?showReport():showMain();
+      } else {
+        showScreen('screen-login');
+      }
+    } catch{showScreen('screen-login');}
+  } else {
+    showScreen('screen-login');
+  }
+
   document.getElementById('username-input').addEventListener('keydown',e=>{if(e.key==='Enter')goToPin();});
   document.getElementById('expense-amount').addEventListener('input',checkExpBtn);
 });
