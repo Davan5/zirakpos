@@ -517,10 +517,28 @@ canvas{display:none;}
     <div class="modal-field"><label>4-DIGIT PIN</label><input class="modal-input" id="modal-pin" type="number" placeholder="e.g. 1234"></div>
     <div class="modal-field">
       <label>ROLE</label>
-      <select class="modal-input" id="modal-role" style="cursor:pointer;">
+      <select class="modal-input" id="modal-role" style="cursor:pointer;" onchange="togglePermissionsVisibility()">
         <option value="worker">Worker</option>
         <option value="owner">Owner (Admin)</option>
       </select>
+    </div>
+    <!-- Permissions — only shown for workers -->
+    <div id="modal-permissions" style="background:var(--surface2);border-radius:10px;padding:0.7rem 0.9rem;margin-bottom:0.65rem;">
+      <div style="font-size:0.65rem;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:0.55rem;">SCREEN ACCESS</div>
+      <div style="display:flex;flex-direction:column;gap:0.45rem;">
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:0.85rem;font-weight:600;cursor:pointer;">
+          <span>💸 Expenses</span>
+          <input type="checkbox" id="perm-expenses" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:0.85rem;font-weight:600;cursor:pointer;">
+          <span>📊 Report</span>
+          <input type="checkbox" id="perm-report" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:0.85rem;font-weight:600;cursor:pointer;">
+          <span>⚙️ Settings</span>
+          <input type="checkbox" id="perm-settings" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
+        </label>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="modal-btn secondary" onclick="closeModal()">Cancel</button>
@@ -536,13 +554,13 @@ canvas{display:none;}
 <script>
 // ══ DEFAULTS ══
 const DEFAULT_ACCOUNTS=[
-  {username:'admin',  pin:'0000',role:'owner', name:'Admin'},
-  {username:'worker1',pin:'1111',role:'worker',name:'Worker 1'},
-  {username:'worker2',pin:'2222',role:'worker',name:'Worker 2'},
-  {username:'worker3',pin:'3333',role:'worker',name:'Worker 3'},
-  {username:'worker4',pin:'4444',role:'worker',name:'Worker 4'},
-  {username:'worker5',pin:'5555',role:'worker',name:'Worker 5'},
-  {username:'worker6',pin:'6666',role:'worker',name:'Worker 6'},
+  {username:'admin',  pin:'0000',role:'owner', name:'Admin',        permissions:{expenses:true, report:true, settings:true}},
+  {username:'worker1',pin:'1111',role:'worker',name:'Worker 1',     permissions:{expenses:false,report:false,settings:false}},
+  {username:'worker2',pin:'2222',role:'worker',name:'Worker 2',     permissions:{expenses:false,report:false,settings:false}},
+  {username:'worker3',pin:'3333',role:'worker',name:'Worker 3',     permissions:{expenses:false,report:false,settings:false}},
+  {username:'worker4',pin:'4444',role:'worker',name:'Worker 4',     permissions:{expenses:false,report:false,settings:false}},
+  {username:'worker5',pin:'5555',role:'worker',name:'Worker 5',     permissions:{expenses:false,report:false,settings:false}},
+  {username:'worker6',pin:'6666',role:'worker',name:'Worker 6',     permissions:{expenses:false,report:false,settings:false}},
 ];
 const DEFAULT_SERVICES={
   small: [{name:'Basic Wash',price:3000},{name:'Full Wash',price:5000},{name:'Interior',price:7000},{name:'Premium',price:10000}],
@@ -662,6 +680,7 @@ function hideLoading(){const el=document.getElementById('loading-overlay');if(el
 
 // ══ STATE ══
 let currentWorker='',currentRole='',currentLang='en';
+let currentPermissions={expenses:true,report:true,settings:true};
 let selectedSize='',selectedService='',selectedPrice=0;
 let selectedCat='',detectedPlate='';
 let currentLogTab='cars',currentPeriod='today';
@@ -757,9 +776,13 @@ function attemptLogin(){
     return;
   }
   currentWorker=acct.name;currentRole=acct.role;
+  // Store full permissions
+  currentPermissions = acct.role==='owner'
+    ? {expenses:true,report:true,settings:true}
+    : (acct.permissions||{expenses:false,report:false,settings:false});
   document.getElementById('topbar-worker-name').textContent='👷 '+acct.name;
-  // Save session so refresh doesn't log out
-  localStorage.setItem('cz_session',JSON.stringify({worker:acct.name,role:acct.role,username:acct.username}));
+  localStorage.setItem('cz_session',JSON.stringify({worker:acct.name,role:acct.role,username:acct.username,permissions:currentPermissions}));
+  applyPermissionsToNav();
   pinValue='';pendingUsername='';
   document.getElementById('username-input').value='';
   updatePinDots();
@@ -774,12 +797,42 @@ function logout(){
   showScreen('screen-login');resetAll();
 }
 
+// ══ PERMISSIONS ══
+function applyPermissionsToNav(){
+  // Update all bottom navs across all screens
+  document.querySelectorAll('.bottom-nav').forEach(nav=>{
+    const tabs=nav.querySelectorAll('.nav-tab');
+    tabs.forEach(tab=>{
+      const span=tab.querySelector('span:last-child');
+      if(!span)return;
+      const txt=span.textContent.trim();
+      // Match by tab icon
+      const icon=tab.querySelector('.tab-icon');
+      if(!icon)return;
+      const ic=icon.textContent.trim();
+      if(ic==='💸') tab.style.display=currentPermissions.expenses?'flex':'none';
+      else if(ic==='📊') tab.style.display=currentPermissions.report?'flex':'none';
+      else if(ic==='⚙️') tab.style.display=currentPermissions.settings?'flex':'none';
+      else tab.style.display='flex';
+    });
+  });
+}
+
 // ══ SCREENS ══
 function showScreen(id){document.querySelectorAll('.screen').forEach(sc=>sc.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function showMain(){showScreen('screen-main');}
-async function showExpense(){showScreen('screen-expense');await updateExpenseList();}
-async function showReport(){currentPeriod='today';document.querySelectorAll('.period-tab').forEach((b,i)=>b.classList.toggle('active',i===0));showScreen('screen-report');await updateReport();}
-async function showSettings(){showScreen('screen-settings');await loadSettingsUI();}
+async function showExpense(){
+  if(!currentPermissions.expenses){showToast('Access denied','error');return;}
+  showScreen('screen-expense');await updateExpenseList();
+}
+async function showReport(){
+  if(!currentPermissions.report&&currentRole!=='owner'){showToast('Access denied','error');return;}
+  currentPeriod='today';document.querySelectorAll('.period-tab').forEach((b,i)=>b.classList.toggle('active',i===0));showScreen('screen-report');await updateReport();
+}
+async function showSettings(){
+  if(!currentPermissions.settings&&currentRole!=='owner'){showToast('Access denied','error');return;}
+  showScreen('screen-settings');await loadSettingsUI();
+}
 
 // ══ SHIFTS ══
 function getCurrentShift(){
@@ -807,14 +860,37 @@ function handlePhoto(e){
   reader.readAsDataURL(file);e.target.value='';
 }
 function simulatePlate(){
-  const nums=['١٢','٣٧','٥٤','٨٩','٢١','٦٦','44','17','82'];
-  const lets=['ک','م','ب','ر','ه'];
-  const cities=['Erbil','Sulaymaniyah','Duhok'];
+  // Realistic Iraqi/Kurdistan plate formats
   const sizes=['small','medium','large'];
-  detectedPlate=nums[Math.floor(Math.random()*nums.length)]+' '+lets[Math.floor(Math.random()*lets.length)]+' '+cities[Math.floor(Math.random()*cities.length)];
   const detected=sizes[Math.floor(Math.random()*sizes.length)];
-  document.getElementById('ai-plate-display').textContent=detectedPlate;
-  document.getElementById('ai-type-display').textContent='🚗 '+s(detected);
+
+  // 50% chance old format, 50% new format
+  const useOldFormat=Math.random()<0.5;
+  let plate;
+
+  if(useOldFormat){
+    // Old Kurdistan format: 6 Eastern Arabic digits + city
+    const easternNums=['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+    const cities=['اربيل','سليمانية','دهوك'];
+    let num='';
+    for(let i=0;i<6;i++) num+=easternNums[Math.floor(Math.random()*10)];
+    // First digit shouldn't be zero
+    num=easternNums[Math.floor(Math.random()*9)+1]+num.slice(1);
+    plate=num+' '+cities[Math.floor(Math.random()*cities.length)];
+  } else {
+    // New format since 2022: GG L #####
+    // Kurdistan codes: 21=Sulaymaniyah, 22=Erbil, 23=Halabja, 24=Duhok
+    const codes=['21','22','22','22','23','24']; // weighted toward Erbil
+    const letters=['A','B','C','D','M','R','S','K','N','H'];
+    const code=codes[Math.floor(Math.random()*codes.length)];
+    const letter=letters[Math.floor(Math.random()*letters.length)];
+    const num=String(Math.floor(Math.random()*90000)+10000);
+    plate=code+' '+letter+' '+num;
+  }
+
+  detectedPlate=plate;
+  document.getElementById('ai-plate-display').textContent=plate;
+  document.getElementById('ai-type-display').textContent='🚗 '+s(detected)+' • '+( useOldFormat?'Old Format':'New Format 2022');
   document.getElementById('ai-result').classList.add('show');
   document.querySelectorAll('.size-btn').forEach(btn=>{if(btn.dataset.size===detected)selectSize(btn,detected);});
   showToast(s('plateRead'),'success');
@@ -1056,18 +1132,25 @@ function renderPriceSettings(svcs){
 }
 function renderWorkerSettings(accounts){
   accounts=accounts||_accounts||DEFAULT_ACCOUNTS;
-  document.getElementById('worker-settings-list').innerHTML=accounts.map((a,i)=>`
-    <div class="worker-row">
+  document.getElementById('worker-settings-list').innerHTML=accounts.map((a,i)=>{
+    const perms=a.role==='owner'?{expenses:true,report:true,settings:true}:(a.permissions||{});
+    const badges=[
+      perms.expenses?'<span style="font-size:0.6rem;background:rgba(0,212,255,0.15);color:var(--accent);border-radius:4px;padding:0.1rem 0.35rem;">💸</span>':'',
+      perms.report?'<span style="font-size:0.6rem;background:rgba(0,212,255,0.15);color:var(--accent);border-radius:4px;padding:0.1rem 0.35rem;">📊</span>':'',
+      perms.settings?'<span style="font-size:0.6rem;background:rgba(0,212,255,0.15);color:var(--accent);border-radius:4px;padding:0.1rem 0.35rem;">⚙️</span>':'',
+    ].join('');
+    return`<div class="worker-row">
       <div class="worker-avatar">${a.role==='owner'?'👑':'👷'}</div>
       <div class="worker-info">
-        <div class="worker-name-text">${a.name}</div>
+        <div class="worker-name-text">${a.name} ${badges}</div>
         <div class="worker-role-text">@${a.username} • PIN: ${a.pin} • ${a.role}</div>
       </div>
       <div class="worker-actions">
         <button class="small-btn accent" onclick="openEditWorker(${i})">Edit</button>
         ${a.username!=='admin'?`<button class="small-btn danger" onclick="deleteWorker(${i})">✕</button>`:''}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 async function saveSettings(){
   showLoading('Saving...');
@@ -1088,23 +1171,36 @@ async function saveSettings(){
 }
 
 // Worker modal
+function togglePermissionsVisibility(){
+  const role=document.getElementById('modal-role').value;
+  document.getElementById('modal-permissions').style.display=role==='owner'?'none':'block';
+}
 function openAddWorker(){
   editingWorkerIdx=null;
   document.getElementById('modal-title').textContent='Add Worker';
   document.getElementById('modal-save-btn').textContent='Add';
   ['modal-name','modal-username','modal-pin'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('modal-role').value='worker';
+  document.getElementById('perm-expenses').checked=false;
+  document.getElementById('perm-report').checked=false;
+  document.getElementById('perm-settings').checked=false;
+  document.getElementById('modal-permissions').style.display='block';
   document.getElementById('worker-modal').classList.add('active');
 }
 function openEditWorker(idx){
   editingWorkerIdx=idx;
   const a=(_accounts||DEFAULT_ACCOUNTS)[idx];
+  const perms=a.permissions||{expenses:false,report:false,settings:false};
   document.getElementById('modal-title').textContent='Edit Worker';
   document.getElementById('modal-save-btn').textContent='Save';
   document.getElementById('modal-name').value=a.name;
   document.getElementById('modal-username').value=a.username;
   document.getElementById('modal-pin').value=a.pin;
   document.getElementById('modal-role').value=a.role;
+  document.getElementById('perm-expenses').checked=perms.expenses||false;
+  document.getElementById('perm-report').checked=perms.report||false;
+  document.getElementById('perm-settings').checked=perms.settings||false;
+  document.getElementById('modal-permissions').style.display=a.role==='owner'?'none':'block';
   document.getElementById('worker-modal').classList.add('active');
 }
 function closeModal(){document.getElementById('worker-modal').classList.remove('active');}
@@ -1113,17 +1209,22 @@ async function saveWorker(){
   const username=document.getElementById('modal-username').value.trim().toLowerCase();
   const pin=String(document.getElementById('modal-pin').value).trim();
   const role=document.getElementById('modal-role').value;
+  const permissions={
+    expenses: role==='owner'?true:document.getElementById('perm-expenses').checked,
+    report:   role==='owner'?true:document.getElementById('perm-report').checked,
+    settings: role==='owner'?true:document.getElementById('perm-settings').checked,
+  };
   if(!name||!username){showToast(s('fillFields'),'error');return;}
   if(pin.length!==4){showToast(s('fillPin'),'error');return;}
   const accounts=_accounts||await getAccounts();
   showLoading('Saving...');
   if(editingWorkerIdx===null){
     if(accounts.find(a=>a.username===username)){hideLoading();showToast('Username already taken','error');return;}
-    await addAccount({username,pin,role,name});
+    await addAccount({username,pin,role,name,permissions});
     _accounts=null;showToast(s('workerAdded'),'success');
   } else {
     const oldUsername=accounts[editingWorkerIdx].username;
-    await updateAccount(oldUsername,{username,pin,role,name});
+    await updateAccount(oldUsername,{username,pin,role,name,permissions});
     _accounts=null;showToast(s('workerUpdated'),'success');
   }
   hideLoading();closeModal();
@@ -1173,12 +1274,15 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const session=localStorage.getItem('cz_session');
   if(session){
     try{
-      const {worker,role,username}=JSON.parse(session);
-      // Verify account still exists
+      const {worker,role,username,permissions}=JSON.parse(session);
       const acct=_accounts.find(a=>a.username===username);
       if(acct){
         currentWorker=worker;currentRole=role;
+        currentPermissions=role==='owner'
+          ?{expenses:true,report:true,settings:true}
+          :(permissions||acct.permissions||{expenses:false,report:false,settings:false});
         document.getElementById('topbar-worker-name').textContent='👷 '+worker;
+        applyPermissionsToNav();
         role==='owner'?showReport():showMain();
       } else {
         showScreen('screen-login');
