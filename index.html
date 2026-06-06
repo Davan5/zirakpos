@@ -672,6 +672,28 @@ body.zp-auth .zp-sidebar,body.zp-auth .zp-sidebar-overlay{display:none!important
 /* PATCH: hide accidental raw code text if it ever gets injected */
 .zp-leaked-code { display:none!important; }
 
+
+/* PATCH: receipt controls must never appear on login/top-level screen */
+body > .receipt-send-row,
+body > .receipt-actions,
+body > #receipt-phone-input,
+body > button,
+#screen-login .receipt-send-row,
+#screen-login .receipt-actions,
+#screen-login #receipt-phone-input,
+#screen-login button.receipt-btn,
+#screen-login .receipt-btn {
+  display:none!important;
+}
+
+/* allow normal login buttons */
+#screen-login .login-btn,
+#screen-login .pin-key,
+#screen-login .lang-opt {
+  display:flex!important;
+}
+#screen-login .lang-opt{display:block!important;}
+
 </style>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -2605,6 +2627,78 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
 })();
 </script>
 
+
+<script>
+(function(){
+  function cleanLoginLeak(){
+    // Remove leaked raw text nodes
+    Array.from(document.body.childNodes).forEach(function(node){
+      if(node.nodeType === Node.TEXT_NODE){
+        var t = (node.textContent || '').trim();
+        if(
+          t.includes('send.insertAdjacentElement') ||
+          t.includes('receipt.insertAdjacentElement') ||
+          t.includes('window.printReceipt') ||
+          t.includes('window.sendReceiptWhatsApp') ||
+          t.includes('const actions=document.createElement')
+        ){
+          node.remove();
+        }
+      }
+    });
+
+    // Remove receipt controls that are outside proper receipt/detail screens
+    document.querySelectorAll('body > input, body > button, body > .receipt-send-row, body > .receipt-actions').forEach(function(el){
+      var txt = (el.textContent || el.placeholder || '').toLowerCase();
+      if(
+        txt.includes('customer whatsapp') ||
+        txt.includes('send') ||
+        txt.includes('print receipt') ||
+        txt.includes('copy text') ||
+        el.id === 'receipt-phone-input'
+      ){
+        el.remove();
+      }
+    });
+
+    // Remove leaked receipt controls from login only
+    var login = document.getElementById('screen-login');
+    if(login){
+      login.querySelectorAll('.receipt-send-row,.receipt-actions,#receipt-phone-input,button').forEach(function(el){
+        var txt = (el.textContent || el.placeholder || '').toLowerCase();
+        if(txt.includes('send') || txt.includes('print receipt') || txt.includes('copy text') || txt.includes('customer whatsapp') || el.id === 'receipt-phone-input'){
+          if(!el.classList.contains('login-btn') && !el.classList.contains('pin-key') && !el.classList.contains('lang-opt')){
+            el.remove();
+          }
+        }
+      });
+    }
+  }
+  document.addEventListener('DOMContentLoaded', cleanLoginLeak);
+  setTimeout(cleanLoginLeak, 50);
+  setTimeout(cleanLoginLeak, 500);
+})();
+</script>
+
+
+<script>
+(function(){
+  function removeStrayTopText(){
+    Array.from(document.body.childNodes).forEach(function(node){
+      if(node.nodeType === Node.TEXT_NODE){
+        var t = (node.textContent || '').trim();
+        if(t === ';' || t === "'" || t === '"' || t === "');" || t === "})();" || t.length <= 3){
+          node.remove();
+        }
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', removeStrayTopText);
+  setTimeout(removeStrayTopText, 50);
+  setTimeout(removeStrayTopText, 300);
+})();
+</script>
+
 </body></html>`;
     const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8;'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ZirakPOS_Report_${data.start}_to_${data.end}.xls`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
@@ -2620,10 +2714,7 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
     receipt.id='print-receipt-area';
     const no=document.createElement('div');no.className='receipt-no';no.id='receipt-no-line';no.textContent='Receipt No: —';receipt.insertAdjacentElement('beforebegin',no);
     const send=document.createElement('div');send.className='receipt-send-row';send.innerHTML='<input id="receipt-phone-input" class="receipt-phone" placeholder="Customer WhatsApp number"><button class="receipt-btn primary" onclick="sendReceiptWhatsApp()">Send</button>';receipt.insertAdjacentElement('afterend',send);
-    const actions=document.createElement('div');actions.className='receipt-actions';actions.id='receipt-actions';actions.innerHTML='<button class="receipt-btn" onclick="printReceipt()">Print Receipt</button><button class="receipt-btn" onclick="copyReceiptText()">Copy Text</button>';send.insertAdjacentElement('afterend',actions);
-  }
-  );
-})();
+    const actions=document.createElement('div');actions.className='receipt-actions';actions.id='receipt-actions';actions.innerHTML='<button class="receipt-btn" onclick="printReceipt()">Print Receipt</button><button class="receipt-btn" onclick="copyReceiptText()">Copy Text</button>';
 </script>
 
 
@@ -3057,6 +3148,78 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
   }
   document.addEventListener('DOMContentLoaded', cleanLeakedCode);
   setTimeout(cleanLeakedCode, 100);
+})();
+</script>
+
+
+<script>
+(function(){
+  function cleanLoginLeak(){
+    // Remove leaked raw text nodes
+    Array.from(document.body.childNodes).forEach(function(node){
+      if(node.nodeType === Node.TEXT_NODE){
+        var t = (node.textContent || '').trim();
+        if(
+          t.includes('send.insertAdjacentElement') ||
+          t.includes('receipt.insertAdjacentElement') ||
+          t.includes('window.printReceipt') ||
+          t.includes('window.sendReceiptWhatsApp') ||
+          t.includes('const actions=document.createElement')
+        ){
+          node.remove();
+        }
+      }
+    });
+
+    // Remove receipt controls that are outside proper receipt/detail screens
+    document.querySelectorAll('body > input, body > button, body > .receipt-send-row, body > .receipt-actions').forEach(function(el){
+      var txt = (el.textContent || el.placeholder || '').toLowerCase();
+      if(
+        txt.includes('customer whatsapp') ||
+        txt.includes('send') ||
+        txt.includes('print receipt') ||
+        txt.includes('copy text') ||
+        el.id === 'receipt-phone-input'
+      ){
+        el.remove();
+      }
+    });
+
+    // Remove leaked receipt controls from login only
+    var login = document.getElementById('screen-login');
+    if(login){
+      login.querySelectorAll('.receipt-send-row,.receipt-actions,#receipt-phone-input,button').forEach(function(el){
+        var txt = (el.textContent || el.placeholder || '').toLowerCase();
+        if(txt.includes('send') || txt.includes('print receipt') || txt.includes('copy text') || txt.includes('customer whatsapp') || el.id === 'receipt-phone-input'){
+          if(!el.classList.contains('login-btn') && !el.classList.contains('pin-key') && !el.classList.contains('lang-opt')){
+            el.remove();
+          }
+        }
+      });
+    }
+  }
+  document.addEventListener('DOMContentLoaded', cleanLoginLeak);
+  setTimeout(cleanLoginLeak, 50);
+  setTimeout(cleanLoginLeak, 500);
+})();
+</script>
+
+
+<script>
+(function(){
+  function removeStrayTopText(){
+    Array.from(document.body.childNodes).forEach(function(node){
+      if(node.nodeType === Node.TEXT_NODE){
+        var t = (node.textContent || '').trim();
+        if(t === ';' || t === "'" || t === '"' || t === "');" || t === "})();" || t.length <= 3){
+          node.remove();
+        }
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', removeStrayTopText);
+  setTimeout(removeStrayTopText, 50);
+  setTimeout(removeStrayTopText, 300);
 })();
 </script>
 
