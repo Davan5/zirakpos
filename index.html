@@ -657,43 +657,6 @@ body.zp-auth .zp-sidebar,body.zp-auth .zp-sidebar-overlay{display:none!important
 @media(max-width:820px){.reminder-grid{grid-template-columns:1fr}.reminder-item{grid-template-columns:1fr}.reminder-item-actions{justify-content:flex-start}}
 @media(max-width:420px){.reminder-actions-row{grid-template-columns:1fr}}
 
-
-/* PATCH: remove View Expense from normal car log / receipt flow */
-#screen-main button.view-expense-btn,
-#screen-main .view-expense-btn,
-#screen-success button.view-expense-btn,
-#screen-success .view-expense-btn,
-.receipt .view-expense-btn,
-.receipt button[data-action="view-expense"]{
-  display:none!important;
-}
-
-
-/* PATCH: hide accidental raw code text if it ever gets injected */
-.zp-leaked-code { display:none!important; }
-
-
-/* PATCH: receipt controls must never appear on login/top-level screen */
-body > .receipt-send-row,
-body > .receipt-actions,
-body > #receipt-phone-input,
-body > button,
-#screen-login .receipt-send-row,
-#screen-login .receipt-actions,
-#screen-login #receipt-phone-input,
-#screen-login button.receipt-btn,
-#screen-login .receipt-btn {
-  display:none!important;
-}
-
-/* allow normal login buttons */
-#screen-login .login-btn,
-#screen-login .pin-key,
-#screen-login .lang-opt {
-  display:flex!important;
-}
-#screen-login .lang-opt{display:block!important;}
-
 </style>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -2584,122 +2547,7 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
       ${table('Summary',['From','To','Cars','Revenue IQD','Expenses IQD','Net Profit IQD'],[[data.start,data.end,logs.length,revenue,expenses,profit]])}
       ${table('Cars',['Date','Plate','Size','Service','Shift','Worker','Price IQD','Free Wash'],logs.map(l=>[l.log_date,l.plate,l.size,l.service,l.shift,l.worker,l.price||0,l.is_free?'Yes':'No']))}
       ${table('Expenses',['Date','Category','Amount IQD','Worker','Note'],exps.map(e=>[e.log_date,e.cat,e.amount||0,e.worker,e.note||'']))}
-      
-<script>
-(function(){
-  function removeCarLogViewExpenseButtons(){
-    const scopes = ['#screen-main', '#screen-success', '.receipt'];
-    scopes.forEach(sel => {
-      document.querySelectorAll(sel + ' button, ' + sel + ' .small-btn, ' + sel + ' .modal-btn').forEach(el => {
-        if ((el.textContent || '').trim().toLowerCase().includes('view expense')) {
-          el.remove();
-        }
-      });
-    });
-  }
-  document.addEventListener('DOMContentLoaded', removeCarLogViewExpenseButtons);
-  document.addEventListener('click', () => setTimeout(removeCarLogViewExpenseButtons, 50), true);
-  setInterval(removeCarLogViewExpenseButtons, 1000);
-})();
-</script>
-
-
-<script>
-(function(){
-  function cleanLeakedCode(){
-    Array.from(document.body.childNodes).forEach(function(node){
-      if(node.nodeType === Node.TEXT_NODE){
-        var t = (node.textContent || '').trim();
-        if(
-          t.includes('const blob=new Blob') ||
-          t.includes('const blob = new Blob') ||
-          t.includes('window.printReceipt=function') ||
-          t.includes('window.sendReceiptWhatsApp=function') ||
-          (t.includes('document.createElement') && t.includes('receipt'))
-        ){
-          node.remove();
-        }
-      }
-    });
-  }
-  document.addEventListener('DOMContentLoaded', cleanLeakedCode);
-  setTimeout(cleanLeakedCode, 100);
-})();
-</script>
-
-
-<script>
-(function(){
-  function cleanLoginLeak(){
-    // Remove leaked raw text nodes
-    Array.from(document.body.childNodes).forEach(function(node){
-      if(node.nodeType === Node.TEXT_NODE){
-        var t = (node.textContent || '').trim();
-        if(
-          t.includes('send.insertAdjacentElement') ||
-          t.includes('receipt.insertAdjacentElement') ||
-          t.includes('window.printReceipt') ||
-          t.includes('window.sendReceiptWhatsApp') ||
-          t.includes('const actions=document.createElement')
-        ){
-          node.remove();
-        }
-      }
-    });
-
-    // Remove receipt controls that are outside proper receipt/detail screens
-    document.querySelectorAll('body > input, body > button, body > .receipt-send-row, body > .receipt-actions').forEach(function(el){
-      var txt = (el.textContent || el.placeholder || '').toLowerCase();
-      if(
-        txt.includes('customer whatsapp') ||
-        txt.includes('send') ||
-        txt.includes('print receipt') ||
-        txt.includes('copy text') ||
-        el.id === 'receipt-phone-input'
-      ){
-        el.remove();
-      }
-    });
-
-    // Remove leaked receipt controls from login only
-    var login = document.getElementById('screen-login');
-    if(login){
-      login.querySelectorAll('.receipt-send-row,.receipt-actions,#receipt-phone-input,button').forEach(function(el){
-        var txt = (el.textContent || el.placeholder || '').toLowerCase();
-        if(txt.includes('send') || txt.includes('print receipt') || txt.includes('copy text') || txt.includes('customer whatsapp') || el.id === 'receipt-phone-input'){
-          if(!el.classList.contains('login-btn') && !el.classList.contains('pin-key') && !el.classList.contains('lang-opt')){
-            el.remove();
-          }
-        }
-      });
-    }
-  }
-  document.addEventListener('DOMContentLoaded', cleanLoginLeak);
-  setTimeout(cleanLoginLeak, 50);
-  setTimeout(cleanLoginLeak, 500);
-})();
-</script>
-
-
-<script>
-(function(){
-  function removeStrayTopText(){
-    Array.from(document.body.childNodes).forEach(function(node){
-      if(node.nodeType === Node.TEXT_NODE){
-        var t = (node.textContent || '').trim();
-        if(t === ';' || t === "'" || t === '"' || t === "');" || t === "})();" || t.length <= 3){
-          node.remove();
-        }
-      }
-    });
-  }
-  document.addEventListener('DOMContentLoaded', removeStrayTopText);
-  setTimeout(removeStrayTopText, 50);
-  setTimeout(removeStrayTopText, 300);
-})();
-</script>
-
-</body></html>`;
+      </body></html>`;
     const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8;'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ZirakPOS_Report_${data.start}_to_${data.end}.xls`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
     showToast('Excel report exported','success');
@@ -2714,7 +2562,31 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
     receipt.id='print-receipt-area';
     const no=document.createElement('div');no.className='receipt-no';no.id='receipt-no-line';no.textContent='Receipt No: —';receipt.insertAdjacentElement('beforebegin',no);
     const send=document.createElement('div');send.className='receipt-send-row';send.innerHTML='<input id="receipt-phone-input" class="receipt-phone" placeholder="Customer WhatsApp number"><button class="receipt-btn primary" onclick="sendReceiptWhatsApp()">Send</button>';receipt.insertAdjacentElement('afterend',send);
-    const actions=document.createElement('div');actions.className='receipt-actions';actions.id='receipt-actions';actions.innerHTML='<button class="receipt-btn" onclick="printReceipt()">Print Receipt</button><button class="receipt-btn" onclick="copyReceiptText()">Copy Text</button>';
+    const actions=document.createElement('div');actions.className='receipt-actions';actions.id='receipt-actions';actions.innerHTML='<button class="receipt-btn" onclick="printReceipt()">Print Receipt</button><button class="receipt-btn" onclick="copyReceiptText()">Copy Text</button>';send.insertAdjacentElement('afterend',actions);
+  }
+  window.printReceipt=function(){injectReceiptButtons();window.print();}
+  window.copyReceiptText=async function(){const r=window.zpLastReceipt;if(!r){showToast('No receipt found','error');return}try{await navigator.clipboard.writeText(buildReceiptText(r));showToast('Receipt copied','success')}catch{showToast('Copy failed','error')}}
+  window.sendReceiptWhatsApp=function(){
+    const r=window.zpLastReceipt;if(!r){showToast('No receipt found','error');return}
+    let phone=(document.getElementById('receipt-phone-input')?.value||'').replace(/[^0-9]/g,'');
+    if(!phone){showToast('Enter customer WhatsApp number','error');return}
+    if(phone.startsWith('0')) phone='964'+phone.slice(1);
+    const url='https://wa.me/'+phone+'?text='+encodeURIComponent(buildReceiptText(r));
+    window.open(url,'_blank');
+  }
+  const oldConfirm=window.confirmEntry;
+  window.confirmEntry=async function(){
+    await oldConfirm();
+    injectReceiptButtons();
+    const no='ZR-'+new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
+    const r={
+      no, plate:document.getElementById('rec-plate')?.textContent||'—', size:document.getElementById('rec-size')?.textContent||'—', service:document.getElementById('rec-service')?.textContent||'—', shift:document.getElementById('rec-shift')?.textContent||'—', worker:document.getElementById('rec-worker')?.textContent||'—', time:document.getElementById('rec-time')?.textContent||'—', total:document.getElementById('rec-total')?.textContent||'—'
+    };
+    window.zpLastReceipt=r;
+    const line=document.getElementById('receipt-no-line');if(line)line.textContent='Receipt No: '+no;
+  }
+  document.addEventListener('DOMContentLoaded',()=>{injectReportControls();injectReceiptButtons();});
+})();
 </script>
 
 
@@ -2964,7 +2836,7 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
     el.innerHTML='<div class="empty-log">Loading...</div>';
     let exps=[]; try{exps=await getExpFor(todayKey)}catch{}
     if(!exps.length){el.innerHTML='<div class="empty-log">No expenses logged yet</div>';return;}
-    el.innerHTML=[...exps].reverse().map(e=>{const enc=encodeURIComponent(JSON.stringify(e));return `<div class="log-item expense-item"><div><div class="log-plate">${typeof getCatIcon==='function'?getCatIcon(e.cat):''} ${escapeHtml(e.cat)}</div><div class="log-meta">${escapeHtml(e.note||'')} • ${escapeHtml(e.worker||'')} • ${new Date(e.created_at||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div><div style="display:grid;gap:6px;justify-items:end"><div class="log-price expense">−${money(e.amount)}</div></div></div>`}).join('');
+    el.innerHTML=[...exps].reverse().map(e=>{const enc=encodeURIComponent(JSON.stringify(e));return `<div class="log-item expense-item"><div><div class="log-plate">${typeof getCatIcon==='function'?getCatIcon(e.cat):''} ${escapeHtml(e.cat)}</div><div class="log-meta">${escapeHtml(e.note||'')} • ${escapeHtml(e.worker||'')} • ${new Date(e.created_at||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div><div style="display:grid;gap:6px;justify-items:end"><div class="log-price expense">−${money(e.amount)}</div><button class="expense-detail-btn" onclick="openExpenseDetails('${enc}')">View Expense</button></div></div>`}).join('');
   };
 
   // 6) Receipt detail page: hide Print/Copy from main success screen; show inside View Receipt.
@@ -2987,239 +2859,6 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
   if(prevShowScreen && !window.__zpFinalShowPatch){window.__zpFinalShowPatch=true;window.showScreen=function(id){prevShowScreen(id);setTimeout(()=>{setupPurchaseRequests();setupUnitDropdown();setupCashExplanation();if(id==='screen-workers')renderWorkersProfilePage();if(id==='screen-success')cleanSuccessReceiptActions();if(id==='screen-requests')renderRequests();if(window.lucide)lucide.createIcons();},80)}}
   document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{setupPurchaseRequests();setupUnitDropdown();setupCashExplanation();renderRequests();if(window.lucide)lucide.createIcons();},250));
   window.addEventListener('load',()=>setTimeout(()=>{setupPurchaseRequests();setupUnitDropdown();setupCashExplanation();if(window.lucide)lucide.createIcons();},500));
-})();
-</script>
-
-
-
-<style>
-/* ===== UX FOLLOW-UP PATCH: WhatsApp receipt, expense proof layout, notifications, comparisons ===== */
-.receipt-send-row{display:grid!important;grid-template-columns:1fr auto;gap:8px;width:100%;max-width:340px;margin:.2rem 0 .45rem}.receipt-phone{min-width:0;background:rgba(255,255,255,.075);border:1px solid var(--border);border-radius:14px;color:var(--text);padding:.72rem .8rem;font-size:16px}.receipt-actions.zp-hidden{display:none!important}.receipt-main-clean{max-width:340px!important}.receipt-main-clean .view-receipt-main-btn{width:100%;margin-bottom:6px}.view-expense-main-btn{border:0;border-radius:13px;padding:.55rem .72rem;background:rgba(255,138,76,.13);border:1px solid rgba(255,138,76,.28);color:var(--orange);font-size:.68rem;font-weight:900;cursor:pointer;white-space:nowrap;width:100%}
-@media(min-width:780px){.expense-detail-layout{grid-template-columns:1fr 1.15fr!important;align-items:start}.expense-detail-layout .detail-actions{grid-column:1/-1}.expense-proof-box{min-height:260px;display:grid;align-content:center}}
-.zp-notification-badge{position:absolute;top:4px;right:4px;min-width:16px;height:16px;border-radius:999px;background:var(--red);color:white;font-size:.56rem;font-weight:900;display:none;align-items:center;justify-content:center;padding:0 4px}.icon-btn.zp-bell{position:relative}.notification-list{display:grid;gap:10px}.notification-item{background:rgba(255,255,255,.065);border:1px solid var(--border);border-radius:18px;padding:12px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start}.notification-icon{width:36px;height:36px;border-radius:14px;display:grid;place-items:center;background:rgba(57,168,255,.14);color:var(--accent)}.notification-title{font-weight:900;font-size:.86rem}.notification-meta{color:var(--text2);font-size:.72rem;margin-top:3px;line-height:1.45}.notification-pill{font-size:.62rem;font-weight:900;border-radius:999px;padding:.25rem .5rem}.notification-pill.high{background:rgba(255,92,122,.14);color:var(--red);border:1px solid rgba(255,92,122,.25)}.notification-pill.medium{background:rgba(255,209,102,.14);color:var(--yellow);border:1px solid rgba(255,209,102,.25)}.notification-pill.low{background:rgba(57,229,140,.14);color:var(--green);border:1px solid rgba(57,229,140,.25)}
-.zp-compare{display:inline-flex;align-items:center;gap:4px;margin-top:6px;border-radius:999px;padding:3px 8px;font-size:.62rem;font-weight:900;width:max-content}.zp-compare.up{background:rgba(57,229,140,.13);color:var(--green);border:1px solid rgba(57,229,140,.24)}.zp-compare.down{background:rgba(255,92,122,.13);color:var(--red);border:1px solid rgba(255,92,122,.24)}.zp-compare.flat{background:rgba(255,255,255,.08);color:var(--text2);border:1px solid var(--border)}
-.report-compare-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.report-compare-card{background:rgba(255,255,255,.055);border:1px solid var(--border);border-radius:14px;padding:10px}.report-compare-label{font-size:.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:.08em}.report-compare-value{font-size:1rem;font-weight:900;margin-top:4px}@media(max-width:680px){.notification-item{grid-template-columns:1fr}.report-compare-row{grid-template-columns:1fr}.receipt-send-row{grid-template-columns:1fr}}
-</style>
-
-<script>
-/* ===== UX FOLLOW-UP PATCH LOGIC ===== */
-(function(){
-  const LS_REQ='zp_requests_v1', LS_INV='zp_inventory_v1', LS_REM='zp_car_ready_reminders_v1', LS_RCPT='zp_receipts_v1';
-  const safeRead=(k,d=[])=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}};
-  const currency=n=>(Number(n)||0).toLocaleString();
-  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const dkey=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
-  const addDays=(date,n)=>{const d=new Date(date);d.setDate(d.getDate()+n);return d};
-  const pct=(cur,prev)=> prev>0?Math.round(((cur-prev)/prev)*100):(cur>0?100:0);
-  const cmpClass=v=>v>0?'up':v<0?'down':'flat';
-  const cmpHtml=(cur,prev,label)=>{const p=pct(cur,prev);return `<span class="zp-compare ${cmpClass(p)}">${p>0?'▲':p<0?'▼':'—'} ${Math.abs(p)}% ${label}</span>`};
-  async function logsFor(k){try{return await getLogsFor(k)}catch{return[]}};
-  async function expsFor(k){try{return await getExpFor(k)}catch{return[]}};
-  async function sumRange(start,end){let logs=[],exps=[];for(let d=new Date(start);d<=new Date(end);d=addDays(d,1)){const k=dkey(d);const [l,e]=await Promise.all([logsFor(k),expsFor(k)]);logs=logs.concat(l||[]);exps=exps.concat(e||[])}return{logs,exps,revenue:logs.reduce((s,x)=>s+(Number(x.price)||0),0),expenses:exps.reduce((s,x)=>s+(Number(x.amount)||0),0)}}
-  function ensureCompareSpots(){
-    const map=[['dash-today-cars','dash-today-cars-compare'],['dash-month-cars','dash-month-cars-compare'],['dash-revenue','dash-revenue-compare'],['dash-expenses','dash-expenses-compare']];
-    map.forEach(([base,id])=>{const el=document.getElementById(base);if(el&&!document.getElementById(id)){const c=document.createElement('div');c.id=id;el.insertAdjacentElement('afterend',c)}});
-    if(document.getElementById('dash-profit')&&!document.getElementById('dash-profit-compare')){const c=document.createElement('div');c.id='dash-profit-compare';document.getElementById('dash-profit').insertAdjacentElement('afterend',c)}
-  }
-  async function updateComparisons(){
-    ensureCompareSpots();
-    const now=new Date();const today=dkey(now);const yesterday=dkey(addDays(now,-1));
-    const curDay=await sumRange(today,today), prevDay=await sumRange(yesterday,yesterday);
-    const dayProfit=curDay.revenue-curDay.expenses, prevDayProfit=prevDay.revenue-prevDay.expenses;
-    const set=(id,html)=>{const el=document.getElementById(id);if(el)el.innerHTML=html};
-    set('dash-today-cars-compare',cmpHtml(curDay.logs.length,prevDay.logs.length,'vs yesterday'));
-    set('dash-revenue-compare',cmpHtml(curDay.revenue,prevDay.revenue,'vs yesterday'));
-    set('dash-expenses-compare',cmpHtml(curDay.expenses,prevDay.expenses,'vs yesterday'));
-    set('dash-profit-compare',cmpHtml(dayProfit,prevDayProfit,'vs yesterday'));
-    const firstMonth=new Date(now.getFullYear(),now.getMonth(),1);const sameDayLastMonth=new Date(now.getFullYear(),now.getMonth()-1,Math.min(now.getDate(),new Date(now.getFullYear(),now.getMonth(),0).getDate()));
-    const firstLastMonth=new Date(now.getFullYear(),now.getMonth()-1,1);
-    const curMonth=await sumRange(dkey(firstMonth),today), prevMonth=await sumRange(dkey(firstLastMonth),dkey(sameDayLastMonth));
-    set('dash-month-cars-compare',cmpHtml(curMonth.logs.length,prevMonth.logs.length,'vs last month'));
-  }
-
-  function receiptText(r){return `ZirakPOS Receipt\nReceipt: ${r?.no||'—'}\nPlate: ${r?.plate||'—'}\nSize: ${r?.size||'—'}\nService: ${r?.service||'—'}\nShift: ${r?.shift||'—'}\nWorker: ${r?.worker||'—'}\nTime: ${r?.time||'—'}\nTotal: ${r?.total||'—'}`}
-  function latestExpense(){const arr=safeRead(LS_RCPT,[]);return arr.length?arr[arr.length-1]:null}
-  window.openLatestExpenseFromReceipt=function(){
-    const r=latestExpense();
-    if(!r){ if(window.showToast)showToast('No expense receipt found','warn'); if(window.showExpense)showExpense(); return; }
-    const e={cat:r.cat||'Expense',amount:r.amount||'',worker:r.worker||'',log_date:r.date||new Date().toISOString().slice(0,10),note:r.name||'Uploaded receipt'};
-    if(window.openExpenseDetails) window.openExpenseDetails(encodeURIComponent(JSON.stringify(e)));
-  };
-  function keepWhatsappVisibleOnReceipt(){
-    const send=document.querySelector('#screen-success .receipt-send-row'); if(send)send.classList.remove('zp-hidden');
-    const actions=document.getElementById('receipt-actions'); if(actions)actions.classList.add('zp-hidden');
-    let clean=document.getElementById('view-receipt-main');
-    const receipt=document.querySelector('#screen-success .receipt');
-    if(receipt && !clean){clean=document.createElement('div');clean.id='view-receipt-main';clean.className='receipt-main-clean';receipt.insertAdjacentElement('afterend',clean)}
-    if(clean){clean.innerHTML='<button class="view-receipt-main-btn" onclick="openReceiptDetails()">View Receipt Details</button>'}
-  }
-
-  const oldOpenExpense=window.openExpenseDetails;
-  window.openExpenseDetails=function(encoded){
-    const e=JSON.parse(decodeURIComponent(encoded));
-    const receipts=safeRead(LS_RCPT,[]); const date=e.log_date||new Date(e.created_at||Date.now()).toISOString().slice(0,10);
-    const proof=[...receipts].reverse().find(r=>String(r.amount||'')===String(e.amount||'') && (!r.cat||!e.cat||r.cat===e.cat) && (!r.date||r.date===date)) || receipts[receipts.length-1];
-    const body=`<div class="expense-detail-layout"><div class="expense-detail-meta">
-      <div class="expense-detail-row"><span>Category</span><b>${esc(e.cat||'Expense')}</b></div>
-      <div class="expense-detail-row"><span>Amount</span><b>${currency(e.amount)} IQD</b></div>
-      <div class="expense-detail-row"><span>Worker</span><b>${esc(e.worker||'—')}</b></div>
-      <div class="expense-detail-row"><span>Date</span><b>${esc(e.log_date||'—')}</b></div>
-      <div class="expense-detail-row"><span>Note</span><b>${esc(e.note||'—')}</b></div>
-    </div><div class="expense-proof-box">${proof?.data&&String(proof.type||'').startsWith('image/')?`<img src="${proof.data}" alt="Receipt image">`:proof?.data?`<div class="expense-proof-empty">Receipt file attached: ${esc(proof.name||'file')}</div>`:'<div class="expense-proof-empty">No receipt image uploaded for this expense.</div>'}</div>
-    <div class="detail-actions"><button class="detail-action-btn primary" onclick="zpPrintDetail()">Print Receipt</button><button class="detail-action-btn" onclick="zpCopyDetail('Category: ${esc(e.cat||'')}\\nAmount: ${currency(e.amount)} IQD\\nWorker: ${esc(e.worker||'')}\\nNote: ${esc(e.note||'')}')">Copy Text</button></div></div>`;
-    document.getElementById('zp-detail-title').textContent='Expense Details';document.getElementById('zp-detail-body').innerHTML=body;document.getElementById('zp-detail-modal').classList.add('active');if(window.lucide)lucide.createIcons();
-  };
-
-  function createNotificationsScreen(){
-    if(!document.getElementById('screen-notifications')){
-      const div=document.createElement('div');div.id='screen-notifications';div.className='screen';div.innerHTML=`<div class="topbar"><div class="topbar-left"><div class="topbar-brand">Notifications</div><div class="topbar-worker">Important reminders, approvals, stock and expense alerts</div></div><div class="topbar-right"><button class="icon-btn" onclick="showDash()"><i data-lucide="x"></i></button></div></div><div class="scrollable"><div class="settings-content"><div class="zp-page-card full"><div class="zp-card-title"><i data-lucide="bell-ring"></i> Important Alerts</div><div id="notification-list" class="notification-list"><div class="empty-log">No notifications</div></div></div></div></div>`;document.body.appendChild(div);
-    }
-    const side=document.querySelector('.zp-side-nav');
-    if(side && !document.querySelector('.zp-side-btn[data-target="screen-notifications"]')){
-      const btn=document.createElement('button');btn.className='zp-side-btn';btn.dataset.target='screen-notifications';btn.setAttribute('onclick','showNotificationsPage()');btn.innerHTML='<i data-lucide="bell-ring"></i> Notifications';side.insertBefore(btn,side.firstChild.nextSibling);
-    }
-    document.querySelectorAll('.topbar-right .icon-btn').forEach(btn=>{ if(btn.innerHTML.includes('bell') && !btn.classList.contains('zp-bell')){btn.classList.add('zp-bell');btn.setAttribute('onclick','showNotificationsPage()');btn.insertAdjacentHTML('beforeend','<span class="zp-notification-badge"></span>')} });
-  }
-  function buildNotifications(){
-    const items=[];
-    safeRead(LS_REM,[]).forEach(r=>items.push({icon:'bell',title:'Customer reminder waiting',meta:`${r.plate||''} • ${r.phoneDisplay||r.phone||''}`,level:'medium'}));
-    safeRead(LS_REQ,[]).filter(r=>r.status==='pending').forEach(r=>items.push({icon:'clipboard-list',title:'Purchase request waiting for approval',meta:`${r.item} • ${r.qty} • ${r.worker||'Worker'}`,level:'medium'}));
-    safeRead(LS_INV,[]).filter(x=>Number(x.current)<=Number(x.min)).forEach(x=>items.push({icon:'package-x',title:'Low stock item',meta:`${x.name}: ${x.current} ${x.unit} left. Minimum: ${x.min}`,level:'high'}));
-    // Expense limit from optional localStorage setting, default high enough not to spam.
-    const limit=Number(localStorage.getItem('zp_expense_alert_limit')||50000);
-    safeRead(LS_RCPT,[]).filter(r=>Number(r.amount)>=limit).slice(-5).forEach(r=>items.push({icon:'receipt-text',title:'Expense exceeded limit',meta:`${r.cat||'Expense'} • ${currency(r.amount)} IQD • Limit ${currency(limit)} IQD`,level:'high'}));
-    return items;
-  }
-  window.showNotificationsPage=function(){createNotificationsScreen();showScreen('screen-notifications');renderNotifications();if(window.closeZpSidebar)closeZpSidebar();};
-  window.renderNotifications=function(){
-    createNotificationsScreen();const items=buildNotifications();const list=document.getElementById('notification-list');if(!list)return;
-    list.innerHTML=items.length?items.map(n=>`<div class="notification-item"><div class="notification-icon"><i data-lucide="${n.icon}"></i></div><div><div class="notification-title">${esc(n.title)}</div><div class="notification-meta">${esc(n.meta)}</div></div><span class="notification-pill ${n.level}">${n.level}</span></div>`).join(''):'<div class="empty-log">No notifications right now</div>';
-    document.querySelectorAll('.zp-notification-badge').forEach(b=>{b.textContent=items.length;b.style.display=items.length?'flex':'none'});if(window.lucide)lucide.createIcons();
-  };
-
-  const oldLoadDash=window.loadDash || (typeof loadDash!=='undefined'?loadDash:null);
-  if(oldLoadDash && !window.__zpCompareDashPatch){window.__zpCompareDashPatch=true;window.loadDash=async function(){await oldLoadDash();await updateComparisons();renderNotifications();keepWhatsappVisibleOnReceipt();}}
-  const oldShowScreen=window.showScreen;
-  if(oldShowScreen && !window.__zpFollowShowPatch){window.__zpFollowShowPatch=true;window.showScreen=function(id){oldShowScreen(id);setTimeout(()=>{createNotificationsScreen();renderNotifications();if(id==='screen-success')keepWhatsappVisibleOnReceipt();if(window.lucide)lucide.createIcons()},80)}}
-  const oldUpdateReport=window.updateReport || (typeof updateReport!=='undefined'?updateReport:null);
-  if(oldUpdateReport && !window.__zpReportComparePatch){window.__zpReportComparePatch=true;window.updateReport=async function(){await oldUpdateReport();setTimeout(()=>updateComparisons(),20)}}
-
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{createNotificationsScreen();renderNotifications();ensureCompareSpots();updateComparisons();keepWhatsappVisibleOnReceipt();},300));
-  window.addEventListener('load',()=>setTimeout(()=>{createNotificationsScreen();renderNotifications();updateComparisons();keepWhatsappVisibleOnReceipt();},800));
-})();
-</script>
-
-<script>
-(function(){
-  function removeCarLogViewExpenseButtons(){
-    const scopes = ['#screen-main', '#screen-success', '.receipt'];
-    scopes.forEach(sel => {
-      document.querySelectorAll(sel + ' button, ' + sel + ' .small-btn, ' + sel + ' .modal-btn').forEach(el => {
-        if ((el.textContent || '').trim().toLowerCase().includes('view expense')) {
-          el.remove();
-        }
-      });
-    });
-  }
-  document.addEventListener('DOMContentLoaded', removeCarLogViewExpenseButtons);
-  document.addEventListener('click', () => setTimeout(removeCarLogViewExpenseButtons, 50), true);
-  setInterval(removeCarLogViewExpenseButtons, 1000);
-})();
-</script>
-
-
-<script>
-(function(){
-  function cleanLeakedCode(){
-    Array.from(document.body.childNodes).forEach(function(node){
-      if(node.nodeType === Node.TEXT_NODE){
-        var t = (node.textContent || '').trim();
-        if(
-          t.includes('const blob=new Blob') ||
-          t.includes('const blob = new Blob') ||
-          t.includes('window.printReceipt=function') ||
-          t.includes('window.sendReceiptWhatsApp=function') ||
-          (t.includes('document.createElement') && t.includes('receipt'))
-        ){
-          node.remove();
-        }
-      }
-    });
-  }
-  document.addEventListener('DOMContentLoaded', cleanLeakedCode);
-  setTimeout(cleanLeakedCode, 100);
-})();
-</script>
-
-
-<script>
-(function(){
-  function cleanLoginLeak(){
-    // Remove leaked raw text nodes
-    Array.from(document.body.childNodes).forEach(function(node){
-      if(node.nodeType === Node.TEXT_NODE){
-        var t = (node.textContent || '').trim();
-        if(
-          t.includes('send.insertAdjacentElement') ||
-          t.includes('receipt.insertAdjacentElement') ||
-          t.includes('window.printReceipt') ||
-          t.includes('window.sendReceiptWhatsApp') ||
-          t.includes('const actions=document.createElement')
-        ){
-          node.remove();
-        }
-      }
-    });
-
-    // Remove receipt controls that are outside proper receipt/detail screens
-    document.querySelectorAll('body > input, body > button, body > .receipt-send-row, body > .receipt-actions').forEach(function(el){
-      var txt = (el.textContent || el.placeholder || '').toLowerCase();
-      if(
-        txt.includes('customer whatsapp') ||
-        txt.includes('send') ||
-        txt.includes('print receipt') ||
-        txt.includes('copy text') ||
-        el.id === 'receipt-phone-input'
-      ){
-        el.remove();
-      }
-    });
-
-    // Remove leaked receipt controls from login only
-    var login = document.getElementById('screen-login');
-    if(login){
-      login.querySelectorAll('.receipt-send-row,.receipt-actions,#receipt-phone-input,button').forEach(function(el){
-        var txt = (el.textContent || el.placeholder || '').toLowerCase();
-        if(txt.includes('send') || txt.includes('print receipt') || txt.includes('copy text') || txt.includes('customer whatsapp') || el.id === 'receipt-phone-input'){
-          if(!el.classList.contains('login-btn') && !el.classList.contains('pin-key') && !el.classList.contains('lang-opt')){
-            el.remove();
-          }
-        }
-      });
-    }
-  }
-  document.addEventListener('DOMContentLoaded', cleanLoginLeak);
-  setTimeout(cleanLoginLeak, 50);
-  setTimeout(cleanLoginLeak, 500);
-})();
-</script>
-
-
-<script>
-(function(){
-  function removeStrayTopText(){
-    Array.from(document.body.childNodes).forEach(function(node){
-      if(node.nodeType === Node.TEXT_NODE){
-        var t = (node.textContent || '').trim();
-        if(t === ';' || t === "'" || t === '"' || t === "');" || t === "})();" || t.length <= 3){
-          node.remove();
-        }
-      }
-    });
-  }
-  document.addEventListener('DOMContentLoaded', removeStrayTopText);
-  setTimeout(removeStrayTopText, 50);
-  setTimeout(removeStrayTopText, 300);
 })();
 </script>
 
