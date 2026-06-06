@@ -668,6 +668,10 @@ body.zp-auth .zp-sidebar,body.zp-auth .zp-sidebar-overlay{display:none!important
   display:none!important;
 }
 
+
+/* PATCH: hide accidental raw code text if it ever gets injected */
+.zp-leaked-code { display:none!important; }
+
 </style>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -2577,6 +2581,30 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
 })();
 </script>
 
+
+<script>
+(function(){
+  function cleanLeakedCode(){
+    Array.from(document.body.childNodes).forEach(function(node){
+      if(node.nodeType === Node.TEXT_NODE){
+        var t = (node.textContent || '').trim();
+        if(
+          t.includes('const blob=new Blob') ||
+          t.includes('const blob = new Blob') ||
+          t.includes('window.printReceipt=function') ||
+          t.includes('window.sendReceiptWhatsApp=function') ||
+          (t.includes('document.createElement') && t.includes('receipt'))
+        ){
+          node.remove();
+        }
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', cleanLeakedCode);
+  setTimeout(cleanLeakedCode, 100);
+})();
+</script>
+
 </body></html>`;
     const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8;'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ZirakPOS_Report_${data.start}_to_${data.end}.xls`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
@@ -2594,28 +2622,7 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
     const send=document.createElement('div');send.className='receipt-send-row';send.innerHTML='<input id="receipt-phone-input" class="receipt-phone" placeholder="Customer WhatsApp number"><button class="receipt-btn primary" onclick="sendReceiptWhatsApp()">Send</button>';receipt.insertAdjacentElement('afterend',send);
     const actions=document.createElement('div');actions.className='receipt-actions';actions.id='receipt-actions';actions.innerHTML='<button class="receipt-btn" onclick="printReceipt()">Print Receipt</button><button class="receipt-btn" onclick="copyReceiptText()">Copy Text</button>';send.insertAdjacentElement('afterend',actions);
   }
-  window.printReceipt=function(){injectReceiptButtons();window.print();}
-  window.copyReceiptText=async function(){const r=window.zpLastReceipt;if(!r){showToast('No receipt found','error');return}try{await navigator.clipboard.writeText(buildReceiptText(r));showToast('Receipt copied','success')}catch{showToast('Copy failed','error')}}
-  window.sendReceiptWhatsApp=function(){
-    const r=window.zpLastReceipt;if(!r){showToast('No receipt found','error');return}
-    let phone=(document.getElementById('receipt-phone-input')?.value||'').replace(/[^0-9]/g,'');
-    if(!phone){showToast('Enter customer WhatsApp number','error');return}
-    if(phone.startsWith('0')) phone='964'+phone.slice(1);
-    const url='https://wa.me/'+phone+'?text='+encodeURIComponent(buildReceiptText(r));
-    window.open(url,'_blank');
-  }
-  const oldConfirm=window.confirmEntry;
-  window.confirmEntry=async function(){
-    await oldConfirm();
-    injectReceiptButtons();
-    const no='ZR-'+new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-    const r={
-      no, plate:document.getElementById('rec-plate')?.textContent||'—', size:document.getElementById('rec-size')?.textContent||'—', service:document.getElementById('rec-service')?.textContent||'—', shift:document.getElementById('rec-shift')?.textContent||'—', worker:document.getElementById('rec-worker')?.textContent||'—', time:document.getElementById('rec-time')?.textContent||'—', total:document.getElementById('rec-total')?.textContent||'—'
-    };
-    window.zpLastReceipt=r;
-    const line=document.getElementById('receipt-no-line');if(line)line.textContent='Receipt No: '+no;
-  }
-  document.addEventListener('DOMContentLoaded',()=>{injectReportControls();injectReceiptButtons();});
+  );
 })();
 </script>
 
@@ -3026,6 +3033,30 @@ Timing: ${d.delay} hour(s) after shift ends`; if(window.lucide)lucide.createIcon
   document.addEventListener('DOMContentLoaded', removeCarLogViewExpenseButtons);
   document.addEventListener('click', () => setTimeout(removeCarLogViewExpenseButtons, 50), true);
   setInterval(removeCarLogViewExpenseButtons, 1000);
+})();
+</script>
+
+
+<script>
+(function(){
+  function cleanLeakedCode(){
+    Array.from(document.body.childNodes).forEach(function(node){
+      if(node.nodeType === Node.TEXT_NODE){
+        var t = (node.textContent || '').trim();
+        if(
+          t.includes('const blob=new Blob') ||
+          t.includes('const blob = new Blob') ||
+          t.includes('window.printReceipt=function') ||
+          t.includes('window.sendReceiptWhatsApp=function') ||
+          (t.includes('document.createElement') && t.includes('receipt'))
+        ){
+          node.remove();
+        }
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', cleanLeakedCode);
+  setTimeout(cleanLeakedCode, 100);
 })();
 </script>
 
