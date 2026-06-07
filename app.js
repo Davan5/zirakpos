@@ -375,17 +375,35 @@ async function showExpense(){
   await renderExpenseCatGrid();showScreen('screen-expense');await updateExpenseList();
 }
 async function showReport(){
-  if(!currentPermissions.report&&currentRole!=='owner'){showToast('Access denied','error');return;}
-  currentPeriod='today';document.querySelectorAll('.period-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
-  showScreen('screen-report');await updateReport();
+  if(currentRole !== 'owner'){
+    showToast('Access denied','error');
+    return;
+  }
+
+  currentPeriod='today';
+  document.querySelectorAll('.period-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+
+  showScreen('screen-report');
+  await updateReport();
 }
 async function showSettings(){
-  if(!currentPermissions.settings&&currentRole!=='owner'){showToast('Access denied','error');return;}
-  showScreen('screen-settings');await loadSettingsUI();
+  if(currentRole !== 'owner'){
+    showToast('Access denied','error');
+    return;
+  }
+
+  showScreen('screen-settings');
+  await loadSettingsUI();
 }
+
 async function showCustomers(){
-  if(!currentPermissions.customers&&currentRole!=='owner'){showToast('Access denied','error');return;}
-  showScreen('screen-customers');await loadCustomers();
+  if(currentRole !== 'owner'){
+    showToast('Access denied','error');
+    return;
+  }
+
+  showScreen('screen-customers');
+  await loadCustomers();
 }
 async function showCustomerDetail(plate){
   showScreen('screen-customer-detail');
