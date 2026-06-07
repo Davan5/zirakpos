@@ -822,7 +822,6 @@ async function loadCustomerDetail(plate){
       <div class="log-price${l.is_free?' receipt-free':''}">${l.is_free?'FREE':(l.price||0).toLocaleString()}</div>
     </div>`).join('');
 }
-function showCustomers(){showScreen('screen-customers');}
 
 // ══ SETTINGS ══
 async function loadSettingsUI(){
