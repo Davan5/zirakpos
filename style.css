@@ -654,3 +654,26 @@ body.zp-auth .zp-sidebar,body.zp-auth .zp-sidebar-overlay{display:none!important
 .expense-detail-btn,.view-receipt-main-btn{border:0;border-radius:13px;padding:.55rem .72rem;background:rgba(57,168,255,.13);border:1px solid rgba(57,168,255,.28);color:var(--accent);font-size:.68rem;font-weight:900;cursor:pointer;white-space:nowrap}
 .expense-detail-layout{display:grid;grid-template-columns:1fr;gap:12px}.expense-proof-box{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:18px;padding:12px}.expense-proof-box img{width:100%;max-height:420px;object-fit:contain;border-radius:14px;background:#05080f}.expense-proof-empty{color:var(--text2);font-size:.8rem;padding:1rem;text-align:center;border:1px dashed var(--border);border-radius:14px}.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.detail-action-btn{border:0;border-radius:14px;padding:.78rem .9rem;background:rgba(255,255,255,.08);border:1px solid var(--border);color:var(--text);font-weight:900;cursor:pointer}.detail-action-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#031018;border:0}.expense-detail-meta{display:grid;gap:8px}.expense-detail-row{display:flex;justify-content:space-between;gap:12px;padding:.65rem .75rem;background:rgba(255,255,255,.055);border:1px solid var(--border);border-radius:14px;font-size:.8rem}.expense-detail-row span:first-child{color:var(--text2)}.expense-detail-row b{text-align:right}.worker-id-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.worker-id-card{background:linear-gradient(145deg,rgba(16,30,44,.92),rgba(255,255,255,.055));border:1px solid var(--border);border-radius:24px;padding:14px;display:grid;grid-template-columns:68px 1fr;gap:12px;align-items:start;box-shadow:0 16px 45px rgba(0,0,0,.22)}.worker-id-photo{width:68px;height:68px;border-radius:22px;background:linear-gradient(135deg,rgba(57,168,255,.22),rgba(38,230,200,.12));display:grid;place-items:center;color:var(--accent);font-weight:900;overflow:hidden;cursor:pointer}.worker-id-photo img{width:100%;height:100%;object-fit:cover}.worker-id-name{font-weight:900;font-size:1rem;letter-spacing:-.02em}.worker-id-role{color:var(--accent2);font-size:.7rem;font-weight:900;margin-top:2px}.worker-id-line{display:flex;align-items:center;gap:7px;color:var(--text2);font-size:.74rem;margin-top:7px}.worker-id-line svg{width:15px!important;height:15px!important}.worker-id-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.worker-edit-panel{grid-column:1/-1;margin-top:10px;background:rgba(255,255,255,.055);border:1px solid var(--border);border-radius:18px;padding:12px;display:none}.worker-edit-panel.active{display:grid;gap:8px}.request-img-preview{display:none;margin-top:6px;border-radius:14px;border:1px solid var(--border);max-height:160px;width:100%;object-fit:cover}.request-thumb{width:58px;height:58px;border-radius:14px;object-fit:cover;border:1px solid var(--border);background:#05080f;flex:0 0 auto}.request-card.with-img{align-items:center}.cash-explain{background:rgba(38,230,200,.08);border:1px solid rgba(38,230,200,.20);border-radius:18px;padding:12px;color:var(--text2);font-size:.78rem;line-height:1.55;margin-bottom:10px}.receipt-main-clean{width:100%;max-width:340px;display:grid;grid-template-columns:1fr;gap:8px;margin:.2rem 0 1rem}@media(max-width:720px){.worker-id-grid{grid-template-columns:1fr}.worker-id-card{grid-template-columns:58px 1fr}.worker-id-photo{width:58px;height:58px;border-radius:18px}.detail-actions{grid-template-columns:1fr}}
 @media print{body.zp-print-detail *{visibility:hidden!important}#zp-detail-print-area,#zp-detail-print-area *{visibility:visible!important}#zp-detail-print-area{position:absolute!important;left:0!important;top:0!important;width:100%!important;background:white!important;color:black!important;padding:20px!important}.detail-actions,.modal-actions{display:none!important}}
+
+
+.login-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.login-tab{
+  border:none;
+  padding:12px;
+  border-radius:14px;
+  cursor:pointer;
+  font-weight:700;
+  background:rgba(255,255,255,.08);
+  color:white;
+}
+
+.login-tab.active{
+  background:var(--accent);
+  color:#000;
+}

@@ -112,7 +112,42 @@ const getLogsFor=async dateStr=>{
     );
   }catch{return[];}
 };
-const saveCarLog=async entry=>{try{await sbFetch('car_logs',{method:'POST',body:JSON.stringify({plate:entry.plate,size:entry.size,service:entry.service,price:entry.price,worker:entry.worker,shift:entry.shift,log_date:todayKey,is_free:entry.is_free||false,business_id:currentBusinessId})});}catch(e){console.error(e);}};
+const saveCarLog=async entry=>{
+  try{
+    if(currentRole === "worker"){
+      await sbFetch('rpc/worker_add_car_log',{
+        method:'POST',
+        body:JSON.stringify({
+          access_code:getAccessCodeFromUrl(),
+          input_worker_code:currentWorkerCode,
+          input_plate:entry.plate,
+          input_size:entry.size,
+          input_service:entry.service,
+          input_price:entry.price,
+          input_shift:entry.shift,
+          input_log_date:todayKey,
+          input_is_free:entry.is_free||false
+        })
+      });
+      return;
+    }
+
+    await sbFetch('car_logs',{
+      method:'POST',
+      body:JSON.stringify({
+        plate:entry.plate,
+        size:entry.size,
+        service:entry.service,
+        price:entry.price,
+        worker:entry.worker,
+        shift:entry.shift,
+        log_date:todayKey,
+        is_free:entry.is_free||false,
+        business_id:currentBusinessId
+      })
+    });
+  }catch(e){console.error(e);}
+};
 const getExpFor=async dateStr=>{
   try{
     return await sbFetch(
@@ -122,11 +157,57 @@ const getExpFor=async dateStr=>{
     );
   }catch{return[];}
 };
-const saveExpense=async exp=>{try{await sbFetch('expenses',{method:'POST',body:JSON.stringify({cat:exp.cat,amount:exp.amount,note:exp.note||'',worker:exp.worker,log_date:todayKey,business_id:currentBusinessId})});}catch(e){console.error(e);}};
+const saveExpense=async exp=>{
+  try{
+    if(currentRole === "worker"){
+      await sbFetch('rpc/worker_add_expense',{
+        method:'POST',
+        body:JSON.stringify({
+          access_code:getAccessCodeFromUrl(),
+          input_worker_code:currentWorkerCode,
+          input_cat:exp.cat,
+          input_amount:exp.amount,
+          input_note:exp.note||'',
+          input_log_date:todayKey
+        })
+      });
+      return;
+    }
+
+    await sbFetch('expenses',{
+      method:'POST',
+      body:JSON.stringify({
+        cat:exp.cat,
+        amount:exp.amount,
+        note:exp.note||'',
+        worker:exp.worker,
+        log_date:todayKey,
+        business_id:currentBusinessId
+      })
+    });
+  }catch(e){console.error(e);}
+};
 
 // Customer queries
-const getCustomerHistory=async plate=>{try{return await sbFetch('car_logs?plate=eq.'+encodeURIComponent(plate)+'&order=created_at.desc&select=*');}catch{return[];}};
-const getAllCustomers=async()=>{try{return await sbFetch('car_logs?select=plate,price,created_at,service,log_date&order=created_at.desc');}catch{return[];}};
+const getCustomerHistory=async plate=>{
+  try{
+    return await sbFetch(
+      'car_logs?plate=eq.' +
+      encodeURIComponent(plate) +
+      '&business_id=eq.' +
+      currentBusinessId +
+      '&order=created_at.desc&select=*'
+    );
+  }catch{
+    return [];
+  }
+};
+const getAllCustomers=async()=>{
+  try{
+    return await sbFetch(
+      'car_logs?business_id=eq.' + currentBusinessId +
+      '&select=plate,price,created_at,service,log_date&order=created_at.desc'
+    );
 
 function getDateKeys(period){
   const keys=[];const now=new Date();
@@ -146,6 +227,7 @@ function hideLoading(){const el=document.getElementById('loading-overlay');if(el
 
 // ══ STATE ══
 let currentWorker='',currentRole='',currentLang='en';
+let currentWorkerCode = null;
 let currentBusinessId = null;
 let currentBusiness = null;
 let currentPermissions={expenses:true,report:true,settings:true,customers:true};
@@ -231,6 +313,7 @@ async function attemptLogin(){
 
   currentBusinessId = acct.business_id;
   currentWorker = acct.full_name;
+  currentWorkerCode = acct.worker_code;
   currentRole = acct.role || "worker";
 
   currentPermissions = {
