@@ -2169,3 +2169,6 @@ document.addEventListener("DOMContentLoaded", function(){
 window.addEventListener("load", function(){
   setTimeout(forceCorrectLoginScreen, 300);
 });
+function isWorkerLink(){
+  return new URL(window.location.href).searchParams.has("access");
+}
