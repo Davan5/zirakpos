@@ -203,15 +203,15 @@ const getCustomerHistory=async plate=>{
   }
 };
 const getAllCustomers=async()=>{
-try{
-return await sbFetch(
-'car_logs?business_id=eq.' + currentBusinessId +
-'&select=plate,price,created_at,service,log_date&order=created_at.desc'
-);
-}catch{
-return [];
-}
-}; // This completely closes getAllCustomers cleanly
+  try{
+    return await sbFetch(
+      'car_logs?business_id=eq.' + currentBusinessId +
+      '&select=plate,price,created_at,service,log_date&order=created_at.desc'
+    );
+  }catch{
+    return [];
+  }
+};
 
 function getDateKeys(period){
   const keys=[];const now=new Date();
@@ -243,20 +243,6 @@ let pinValue='',pendingUsername='';
 let pendingWorker = null;
 let _accounts=null;
 let _loyaltyThreshold=10;
-
-// Add these right under your State variables:
-function getAccessCodeFromUrl(){
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('access_code') || '';
-}
-
-function showToast(message, type='success'){
-    console.log(`[Toast]: ${message}`);
-}
-
-async function loadSettingsUI() { console.log("Settings UI rendered."); }
-async function loadCustomers() { console.log("Customers listing compiled."); }
-async function loadCustomerDetail(plate) { console.log("History loaded."); }
 
 // ══ LANG ══
 const KU={morning:'بەیانی',evening:'ئێواران',currency:'دینار'};
@@ -732,7 +718,6 @@ async function switchLogTab(tab,btn){
   hideLoading();
   renderLogTab(tab,allLogs,allExps);
 }
-/*
 function renderLogTab(tab,allLogs,allExps){
   const el=document.getElementById('report-log-list');
   if(tab==='cars'){
@@ -751,7 +736,7 @@ function renderLogTab(tab,allLogs,allExps){
       </div>`).join('');
   }
 }
-*/
+
 // ══ CUSTOMERS ══
 async function loadCustomers(){
   const el=document.getElementById('customers-list');
@@ -2079,15 +2064,6 @@ async function testProfile(){
   );
 
   console.log("PROFILE ROWS:", profileRows);
-}
-async function getCurrentBusiness(){
-  if(!currentBusinessId) return null;
-
-  const rows = await sbFetch(
-    "businesses?id=eq." + currentBusinessId + "&select=*"
-  );
-
-  return rows[0] || null;
 }
 
 function getAccessCodeFromUrl(){
